@@ -13,7 +13,7 @@ using namespace std;
  * 
  * @param i 
  */
-BigInteger::BigInteger(const signedElemType i) : magnitude(std::make_shared<magVec>(1))
+BigInteger::BigInteger(const SignedElemType i) : magnitude(std::make_shared<Vec>(1))
 {
     if (i == 0)
         sign = 0;
@@ -52,7 +52,7 @@ BigInteger::BigInteger(const char * str) : BigInteger(str, 10) {}
 BigInteger::BigInteger(const char * str, int base) : BigInteger(str, std::strlen(str), base) {}
 
 BigInteger::BigInteger(const char * str, std::size_t len, int base) : 
-    magnitude(std::make_shared<magVec>())
+    magnitude(std::make_shared<Vec>())
 {
     if (base < 2 || base > 36)
         throw BigIntegerException("Invalid base");
@@ -62,8 +62,8 @@ BigInteger::BigInteger(const char * str, std::size_t len, int base) :
         sign = convert(*this->magnitude, str, base);
 }
 
-BigInteger::BigInteger(const magVec e, int sign) : magnitude(std::make_shared<magVec>(e)), sign(sign) {}
-BigInteger::BigInteger(const magType e, int sign) : magnitude(std::make_shared<magVec>(e)), sign(sign) {}
+BigInteger::BigInteger(const Vec e, int sign) : magnitude(std::make_shared<Vec>(e)), sign(sign) {}
+BigInteger::BigInteger(const VecPtr e, int sign) : magnitude(e), sign(sign) {}
 
 BigInteger BigInteger::operator+(const BigInteger & n) const
 {
@@ -137,12 +137,16 @@ BigInteger::operator bool() const
     return this->sign != 0;
 }
 
-BigInteger BigInteger::operator<<(const elemType i) const 
+BigInteger BigInteger::operator<<(const ElemType i) const 
 {
+    if (i == 0)
+        return *this;
     return BigInteger(sl(*this->magnitude, i), this->sign);
 }
-BigInteger BigInteger::operator>>(const elemType i) const 
+BigInteger BigInteger::operator>>(const ElemType i) const 
 {
+    if (i == 0)
+        return *this;
     if ((i / elemWIDTH) >= this->magnitude->size())
         return zero;
     return BigInteger(sr(*this->magnitude, i), this->sign);
