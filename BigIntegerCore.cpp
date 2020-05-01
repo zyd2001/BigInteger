@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <cassert>
 
 using namespace zyd2001;
 using namespace std;
@@ -42,7 +43,7 @@ int BigInteger::digit(char ch, int base)
     }
 }
 
-int BigInteger::compare(const std::vector<elemType> & v1, const std::vector<elemType> & v2)
+int BigInteger::compare(const magVec & v1, const magVec & v2)
 {
     if (v1.size() > v2.size())
         return 1;
@@ -66,42 +67,49 @@ int BigInteger::compare(const std::vector<elemType> & v1, const std::vector<elem
     auto maxSize = v1.size(); \
     auto minSize = v2.size();
 
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::add(const std::vector<elemType> & a, 
-    const std::vector<elemType> & b)
+BigInteger::magType BigInteger::add(const magVec & a, const magVec & b)
 {
-    int carry = 0;
+    int carry = 0, ca1, ca2;
     swap_and_define
-    auto res = std::make_shared<std::vector<elemType>>(maxSize + 1);
+    auto res = std::make_shared<magVec>(maxSize + 1);
     auto & r = *res;
+    elemType s1, s2;
     for (std::size_t i = 0; i < minSize; ++i)
     {
-        r[i] = v1[i] + v2[i] + carry;
-        carry = (r[i] < v1[i] || (r[i] == v1[i] && v2[i] != 0)) ? 1 : 0;
+        s1 = v1[i] + v2[i];
+        ca1 = s1 < v1[i];
+        s2 = s1 + carry;
+        ca2 = s2 == 0;
+        carry = ca1 | ca2;
+        r[i] = s2;
     }
     for (std::size_t i = minSize; i < maxSize && carry != 0; ++i)
     {
-        r[i] = v1[i] + carry;
-        carry = (r[i] == 0) ? 1 : 0; // if overflow, only possibility is 0
+        s1 = v1[i] + carry;
+        carry = s1 == 0; // if overflow, only possibility is 0
+        r[i] = s1;
     }
     if (carry)
-        r[maxSize] = 1;
+        r.back() = 1;
     else
         r.resize(maxSize);
     return res;
 }
 
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::add(const std::vector<elemType> & v1, 
-    const elemType n)
+BigInteger::magType BigInteger::add(const magVec & v1, const elemType n)
 {
     int carry = 0;
-    auto res = std::make_shared<std::vector<elemType>>(v1.size() + 1);
+    auto res = std::make_shared<magVec>(v1.size() + 1);
     auto & r = *res;
-    r[0] = v1[0] + n;
-    carry = (r[0] < v1[0]) ? 1 : 0;
+    elemType sl;
+    sl = v1[0] + n;
+    carry = sl < v1[0];
+    r[0] = sl;
     for (std::size_t i = 1; i < v1.size() && carry != 0; i++)
     {
-        r[i] = v1[i] + carry;
-        carry = (r[i] == 0) ? 1 : 0; // if overflow, only possibility is 0
+        sl = v1[i] + carry;
+        carry = sl == 0; // if overflow, only possibility is 0
+        r[i] = sl;
     }
     if (carry)
         r.back() = 1;
@@ -111,63 +119,59 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::add(const std::ve
 }
 
 // assume v1 > v2
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::sub(const std::vector<elemType> & v1, 
-    const std::vector<elemType> & v2)
+BigInteger::magType BigInteger::sub(const magVec & v1, const magVec & v2)
 {
-    int borrow = 0;
-    auto res = std::make_shared<std::vector<elemType>>(v1.size());
+    int borrow = 0, br1, br2;
+    auto res = std::make_shared<magVec>(v1.size());
     auto & r = *res;
+    elemType s1, s2;
     for (std::size_t i = 0; i < v2.size(); ++i)
     {
         // if overflow, the result will just be uintmax + v1[i] - v[2]
         // because of 2's complement
-        // r[i] = v1[i] - v2[i] - borrow;
-        // if (v1[i] > v2[i])
-        //     borrow = 0;
-        // else
-        //     borrow = (borrow || (v1[i] < v2[i])) ? 1 : 0;
-        r[i] = v1[i] - v2[i] - borrow;
-        if (r[i] > v1[i] || (r[i] == v1[i] && v2[i] != 0))
-            borrow = 1;
-        else
-            borrow = 0;
+        s1 = v1[i] - v2[i];
+        br1 = s1 > v1[i];
+        s2 = s1 - borrow;
+        br2 = s2 == elemMAX;
+        borrow = br1 | br2;
+        r[i] = s2;
     }
     for (std::size_t i = v2.size(); i < v1.size() && borrow != 0; ++i)
     {
-        r[i] = v1[i] - borrow;
-        borrow = (r[i] == elemMAX) ? 1 : 0;
+        s1 = v1[i] - borrow;
+        borrow = s1 == elemMAX;
+        r[i] = s1;
     }
     return res;
 }
 
 // assume v1 > n
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::sub(const std::vector<elemType> & v1, 
-    const elemType n)
+BigInteger::magType BigInteger::sub(const magVec & v1, const elemType n)
 {
     int borrow = 0;
-    auto res = std::make_shared<std::vector<elemType>>(v1.size());
+    auto res = std::make_shared<magVec>(v1.size());
     auto & r = *res;
+    elemType s1;
     r[0] = v1[0] - n;
-    borrow = (v1[0] < n) ? 1 : 0;
+    borrow = v1[0] < n;
     for (std::size_t i = 1; i < v1.size() && borrow != 0; i++)
     {
-        r[i] = v1[i] - borrow;
-        borrow = (r[i] == elemMAX) ? 1 : 0;
+        s1 = v1[i] - borrow;
+        borrow = s1 == elemMAX;
+        r[i] = s1;
     }
     return res;
 }
 
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::mul(const std::vector<elemType> & v1, 
-    const std::vector<elemType> & v2)
+BigInteger::magType BigInteger::mul(const magVec & v1, const magVec & v2)
 {
     return longMul(v1, v2);
 }
 
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::longMul(const std::vector<elemType> & a, 
-    const std::vector<elemType> & b)
+BigInteger::magType BigInteger::longMul(const magVec & a, const magVec & b)
 {
     swap_and_define 
-    auto res = std::make_shared<std::vector<elemType>>(maxSize + minSize); 
+    auto res = std::make_shared<magVec>(maxSize + minSize); 
     auto & r = *res;
     largeType temp;
     elemType carry = 0;
@@ -187,10 +191,9 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::longMul(const std
     return res;
 }
 
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::longMul(const std::vector<elemType> & v1, 
-    const elemType n)
+BigInteger::magType BigInteger::longMul(const magVec & v1, const elemType n)
 {
-    auto res = std::make_shared<std::vector<elemType>>(v1.size() + 1);
+    auto res = std::make_shared<magVec>(v1.size() + 1);
     auto & r = *res;
     largeType temp;
     elemType carry = 0;
@@ -207,7 +210,7 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::longMul(const std
     return res;
 }
 
-std::tuple<BigInteger::elemType, BigInteger::elemType> BigInteger::mullh(const elemType a, const elemType b)
+BigInteger::twoElemType BigInteger::mullh(const elemType a, const elemType b)
 {
     elemType h, l;
     asm volatile
@@ -219,7 +222,7 @@ std::tuple<BigInteger::elemType, BigInteger::elemType> BigInteger::mullh(const e
     return {h, l};
 }
 
-std::tuple<BigInteger::elemType, BigInteger::elemType> BigInteger::divrem(const elemType h, const elemType l, 
+BigInteger::twoElemType BigInteger::divrem(const elemType h, const elemType l, 
     const elemType d)
 {
     elemType q, r;
@@ -232,86 +235,158 @@ std::tuple<BigInteger::elemType, BigInteger::elemType> BigInteger::divrem(const 
     return {q, r};
 }
 
-void BigInteger::subMutable(std::vector<elemType> & u, const std::vector<elemType> & s)
+int BigInteger::normalize(magVec & v)
 {
-    elemType borrow = 0, ut;
-    for (std::size_t i = 0; i < s.size(); ++i)
+    largeType t;
+    elemType temp = 0;
+    int count = __builtin_clzl(v.back());
+    for (std::size_t i = 0; i < v.size(); ++i)
     {
-        ut = u[i];
-        u[i] = u[i] - s[i] - borrow;
-        if (u[i] >= ut || (u[i] == ut && s[i] != 0))
-            borrow = 1;
-        else
-            borrow = 0;
+        t = v[i];
+        t <<= count;
+        v[i] = t | temp;
+        temp = t >> elemWIDTH;
     }
-    for (std::size_t i = s.size(); i < u.size() && borrow != 0; ++i)
-    {
-        u[i] = u[i] - borrow;
-        borrow = (u[i] == elemMAX) ? 1 : 0;
-    }
+    return count;
 }
 
-int BigInteger::subMul(std::vector<elemType> & u, const std::vector<elemType> & v, const elemType q)
+void BigInteger::subMutable(magVec & u, const magVec & s, const std::size_t index)
+{
+    int borrow = 0, br1, br2;
+    elemType s1, s2;
+    for (std::size_t i = 0, j = index; i < s.size(); ++i, ++j)
+    {
+        s1 = u[j] - s[i];
+        br1 = s1 > u[j];
+        s2 = s1 - borrow;
+        br2 = s2 == elemMAX;
+        borrow = br1 | br2;
+        u[j] = s2;
+    }
+    if (borrow)
+        throw BigIntegerException("unexpected borrow");
+}
+
+/**
+ * @brief helper function for knuth's division algorithm D4
+ * 
+ * @param q test quotient
+ * @param index index j, substract start at index j of u
+ * @return int return 1 if no borrow, 0 if borrow
+ */
+int BigInteger::subMul(magVec & u, const magVec & v, const elemType q,const std::size_t index)
 {
     if (q == 0)
         return 1;
 
     if (q > 1)
     {
+        // substract one less time
         auto sp = longMul(v, q - 1);
         auto & s = *sp;
-        subMutable(u, s);
+        subMutable(u, s, index);
     }
 
+    // D5
+    // test if the last substraction will cause borrow
     if (compare(u, v) < 0)
         return 0;
     else
     {
-        subMutable(u, v);
+        subMutable(u, v, index);
         return 1;
     }
 }
 
-// TODO: trim leading zero
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::div(const std::vector<elemType> & a, 
-    const std::vector<elemType> & b)
+void BigInteger::divFull(const magVec & a, const magVec & b, magVec & q, magVec & r, bool remainder)
 {
     std::size_t n = b.size();
     std::size_t m = a.size() - n;
-    auto res = std::make_shared<std::vector<elemType>>(m + 1);
-    auto & r = *res;
-    elemType _q, _r; // test quotient, remainder
+
+    bool pass;
+    elemType quo, rem, t; // test quotient, remainder and a temp var
+    elemType high, low, divisor;
     auto v = b;
     // D1 normalize
-    int count = sl(v);
+    int count = normalize(v);
     auto up = sl(a, count);
     auto u = *up;
-    // loop
+    // D2 loop
     for (std::size_t j = m; j >= 0; --j)
     {
+        high = u[n + j];
+        low = u[n - 1 + j];
+        divisor = v[n - 1];
+
         // D3
-        std::tie(_q, _r) = divrem(u[n + j], u[n - 1 + j], v[n - 1]);
-        while (mullh(_q, v[n - 2]) > std::make_tuple(_r, u[n - 2 + j]))
+        assert(high <= divisor);
+        if (high == divisor)
         {
-            --_q;
-            largeType t = static_cast<largeType>(_r) + v[n - 1];
-            if (t > elemMAX) // r >= base
+            // quo == base condition
+            // do the substraction and addtion
+            quo = elemMAX;
+            rem = low + divisor;
+            if (rem < low && rem > 0) // !(r < base)
+                pass = true;
+            else
+                pass = false;
+        }
+        else
+            std::tie(quo, rem) = divrem(high, low, divisor);
+        while (!pass && (mullh(quo, v[n - 2]) > std::make_tuple(rem, u[n - 2 + j])))
+        {
+            --quo;
+            t = rem + divisor;
+            if (t < rem && t > 0) // !(r < base)
                 break;
             else
-                _r = static_cast<elemType>(t);
+                rem = t;
         }
-        if (!subMul(u, v, _q))
+        // D4
+        if (!subMul(u, v, quo, j))
             // D6, no need for add back, handled in subMul
-            ++_q;
-        r[j] = _q;
+            ++quo;
+        q[j] = quo;
     }
+    // get remainder
+    if (remainder)
+    {
+        largeType temp;
+        temp = static_cast<largeType>(u[0]) << elemWIDTH - count;
+        r[0] = static_cast<elemType>(temp >> elemWIDTH);
+        // remainder's size cannot be large than divisor
+        for (std::size_t i = 1; i < b.size(); ++i) 
+        {
+            if (u[i] == 0)
+                break;
+            temp = static_cast<largeType>(u[i]) << elemWIDTH - count;
+            r[i] = static_cast<elemType>(temp >> elemWIDTH);
+            r[i - 1] |= static_cast<elemType>(temp);
+        }
+    }
+}
+
+BigInteger::magType BigInteger::div(const magVec & a, const magVec & b)
+{
+    auto res = std::make_shared<magVec>(a.size() - b.size() + 1);
+    auto & r = *res;
+    divFull(a, b, r, r, false);
     return res;
 }
 
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::div(const std::vector<elemType> & v, 
-    const elemType n)
+std::tuple<BigInteger::magType, BigInteger::magType> BigInteger::divrem(const magVec & a, const magVec & b)
 {
-    auto res = std::make_shared<std::vector<elemType>>(v.size());
+    auto quo = std::make_shared<magVec>(a.size() - b.size() + 1);
+    auto & q = *quo;
+    auto rem = std::make_shared<magVec>(b.size());
+    auto & r = *rem;
+    divFull(a, b, q, r, true);
+    return {quo, rem};
+}
+
+BigInteger::magType BigInteger::div(const magVec & v, const elemType n)
+{
+    auto res = std::make_shared<magVec>(v.size());
     auto & r = *res;
     elemType temp = v.back();
     for (std::size_t i = v.size() - 2; i >= 0; --i)
@@ -327,12 +402,11 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::div(const std::ve
 }
 
 
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::andFunc(const std::vector<elemType> & a, 
-    const std::vector<elemType> & b) 
+BigInteger::magType BigInteger::andFunc(const magVec & a, const magVec & b) 
 {
     swap_and_define
     // 111 & ~110101 = 111 & ~101
-    auto res = std::make_shared<std::vector<elemType>>(minSize);
+    auto res = std::make_shared<magVec>(minSize);
     auto & r = *res;
     std::size_t i = 0, t;
     auto count = v2.size();
@@ -342,13 +416,12 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::andFunc(const std
     });
     return res;
 }
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::andnot(const std::vector<elemType> & v1, 
-    const std::vector<elemType> & v2) 
+BigInteger::magType BigInteger::andnot(const magVec & v1, const magVec & v2) 
 {
     auto maxSize = std::max(v1.size(), v2.size());
     auto minSize = std::min(v1.size(), v2.size());
     // 111 & ~110101 = 111 & ~101
-    auto res = std::make_shared<std::vector<elemType>>(minSize); 
+    auto res = std::make_shared<magVec>(minSize); 
     auto & r = *res;
     std::size_t i = 0, t;
     std::generate_n(r.begin(), minSize, [&] () {
@@ -364,11 +437,10 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::andnot(const std:
     }
     return res;
 }
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::orFunc(const std::vector<elemType> & a, 
-    const std::vector<elemType> & b)
+BigInteger::magType BigInteger::orFunc(const magVec & a, const magVec & b)
 {
     swap_and_define
-    auto res = std::make_shared<std::vector<elemType>>(maxSize); 
+    auto res = std::make_shared<magVec>(maxSize); 
     auto & r = *res;
     std::size_t i = 0, t;
     auto count = v2.size();
@@ -380,11 +452,10 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::orFunc(const std:
         r[i] = v1[i];
     return res;
 }
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::xorFunc(const std::vector<elemType> & a, 
-    const std::vector<elemType> & b)
+BigInteger::magType BigInteger::xorFunc(const magVec & a, const magVec & b)
 {
     swap_and_define
-    auto res = std::make_shared<std::vector<elemType>>(maxSize); 
+    auto res = std::make_shared<magVec>(maxSize); 
     auto & r = *res;
     std::size_t i = 0, t;
     auto count = v2.size();
@@ -397,28 +468,13 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::xorFunc(const std
     return res;
 }
 
-int BigInteger::sl(std::vector<elemType> & v)
-{
-    largeType t;
-    elemType temp = 0;
-    int count = __builtin_clzl(v.back());
-    for (std::size_t i = 0; i < v.size(); ++i)
-    {
-        t = v[i];
-        t <<= count;
-        v[i] = t | temp;
-        temp = t >> elemWIDTH;
-    }
-    return count;
-}
-
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::sl(const std::vector<elemType> & v, const elemType n)
+BigInteger::magType BigInteger::sl(const magVec & v, const elemType n)
 {
     largeType t;
     std::size_t count, rem;
     count = n / elemWIDTH;
     rem = n % elemWIDTH;
-    auto res = std::make_shared<std::vector<elemType>>(v.size() + count + 1);
+    auto res = std::make_shared<magVec>(v.size() + count + 1);
     auto & r = *res;
     for (std::size_t i = 0; i < v.size(); ++i)
     {
@@ -427,19 +483,34 @@ std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::sl(const std::vec
         r[count + i] |= t;
         r[count + i + 1] = t >> elemWIDTH;
     }
+    if (r.back() == 0)
+        r.resize(r.size() - 1);
     return res;
 }
-std::shared_ptr<std::vector<BigInteger::elemType>> BigInteger::sr(const std::vector<elemType> & v, const elemType n)
+BigInteger::magType BigInteger::sr(const magVec & v, const elemType n)
 {
     largeType t;
     std::size_t count, rem;
     count = n / elemWIDTH;
     rem = n % elemWIDTH;
-    auto res = std::make_shared<std::vector<elemType>>(v.size() - count);
+    assert(count < v.size());
+    auto res = std::make_shared<magVec>(v.size() - count);
     auto & r = *res;
+    largeType t;
+    t = static_cast<largeType>(v[count]) << elemWIDTH - rem;
+    r[0] = static_cast<elemType>(t >> elemWIDTH);
+    for (std::size_t i = 1 + count; i < v.size(); ++i) 
+    {
+        t = static_cast<largeType>(v[i]) << elemWIDTH - rem;
+        r[i - count] = static_cast<elemType>(t >> elemWIDTH);
+        r[i - count - 1] |= static_cast<elemType>(t);
+    }
+    if (r.back() == 0)
+        r.resize(r.size() - 1);
+    return res;
 }
 
-int BigInteger::convert(std::vector<elemType> & v, const char * str, int base)
+int BigInteger::convert(magVec & v, const char * str, int base)
 {
     int step = digitsPerInt[base - 2];
     elemType value = 0;
