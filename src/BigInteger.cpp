@@ -126,6 +126,40 @@ BigInteger BigInteger::operator/(const BigInteger & n) const
         return BigInteger(div(*this->magnitude, *n.magnitude), -1);
 }
 
+BigInteger BigInteger::operator%(const BigInteger & n) const
+{
+    if (this->sign == 0)
+        return zero;
+    if (n.sign == 0)
+        throw new BigIntegerException("Divide by zero");
+    int cmp = compare(*this->magnitude, *n.magnitude);
+    if (cmp < 0)
+        return *this;
+    if (cmp == 0)
+        return zero;
+    // remainder's sign always follow dividend
+    return BigInteger(std::get<1>(divrem(*this->magnitude, *n.magnitude)), this->sign);
+}
+
+BigInteger::QuoRemType BigInteger::div(const BigInteger & n) const
+{
+    if (this->sign == 0)
+        return {zero, zero};
+    if (n.sign == 0)
+        throw new BigIntegerException("Divide by zero");
+    int cmp = compare(*this->magnitude, *n.magnitude);
+    if (cmp < 0)
+        return {zero, *this};
+    if (cmp == 0)
+        return {BigInteger((this->sign == n.sign) ? 1 : -1), zero};
+
+    // handle different sign
+    int quoSign = (this->sign == n.sign) ? 1 : -1;
+    VecPtr quo, rem;
+    std::tie(quo, rem) = divrem(*this->magnitude, *n.magnitude);
+    return {BigInteger(quo, quoSign), BigInteger(rem, this->sign)};
+}
+
 BigInteger BigInteger::operator-() const
 {
     return BigInteger(this->magnitude, -this->sign);

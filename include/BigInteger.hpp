@@ -19,11 +19,12 @@ namespace zyd2001
     public:
         using ElemType = uint64_t;
         using SignedElemType = int64_t;
+        using QuoRemType = std::tuple<BigInteger, BigInteger>;
+    private:
         using LargeType = __uint128_t;
         using Vec = std::vector<ElemType>;
         using VecPtr = std::shared_ptr<Vec>;
         using TwoElemType = std::tuple<ElemType, ElemType>;
-    private:
         VecPtr magnitude;
         int sign = 0;
 
@@ -81,6 +82,7 @@ namespace zyd2001
         BigInteger operator*(const BigInteger &) const;
         BigInteger operator/(const BigInteger &) const;
         BigInteger operator%(const BigInteger &) const;
+        QuoRemType div(const BigInteger &) const;
         BigInteger operator-() const;
         explicit operator bool() const;
         BigInteger operator<<(const ElemType) const;
