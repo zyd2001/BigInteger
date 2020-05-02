@@ -9,6 +9,7 @@
 using namespace zyd2001;
 
 const BigInteger BigInteger::zero = BigInteger();
+const BigInteger::VecPtr BigInteger::zeroPtr = std::make_shared<Vec>();
 
 int BigInteger::compare(const Vec & v1, const Vec & v2)
 {
@@ -498,7 +499,22 @@ BigInteger::VecPtr BigInteger::sr(const Vec & v, const ElemType n)
     return res;
 }
 
-const int BigInteger::digitsPerElem[36] = {0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 19};
+// TODO: Type
+const int BigInteger::digitsPerElem[36] = 
+    {0, 0, 63, 40, 31, 27, 24, 22, 21, 20, 19, 18, 17, 17, 16, 16, 15, 15, 
+    15, 15, 14, 14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12};
+const BigInteger::ElemType BigInteger::maxPerElem[36] = 
+    {1, 1, 9223372036854775808UL, 12157665459056928801UL, 4611686018427387904UL, 
+    7450580596923828125UL, 4738381338321616896UL, 3909821048582988049UL, 
+    9223372036854775808UL, 12157665459056928801UL, 10000000000000000000UL, 
+    5559917313492231481UL, 2218611106740436992UL, 8650415919381337933UL, 
+    2177953337809371136UL, 6568408355712890625UL, 1152921504606846976UL, 
+    2862423051509815793UL, 6746640616477458432UL, 15181127029874798299UL, 
+    1638400000000000000UL, 3243919932521508681UL, 6221821273427820544UL, 
+    11592836324538749809UL, 876488338465357824UL, 1490116119384765625UL, 
+    2481152873203736576UL, 4052555153018976267UL, 6502111422497947648UL, 
+    10260628712958602189UL, 15943230000000000000UL, 787662783788549761UL, 
+    1152921504606846976UL, 1667889514952984961UL, 2386420683693101056UL};
 
 /**
  * @brief helper Function to convert char to int
@@ -531,25 +547,27 @@ int BigInteger::digit(char ch, int base)
 
 BigInteger::ElemType BigInteger::convert(const char * str, int base, int length)
 {
-    ElemType num = 0, t;
+    ElemType num = 0;
     for (int i = 0; i < length; i++)
     {
         num *= base;
-        t = digit(str[i], base);
-        if (t == -1)
-            throw BigIntegerException("Invalid character");
-        num += t;
+        num += digit(str[i], base);
     }
     return num;
 }
 
-void BigInteger::addMul(Vec & v, const ElemType n, int base)
+void BigInteger::addMul(Vec & v, const ElemType p, const ElemType n)
 {
     LargeType temp;
     ElemType carry = 0;
+    if (v.size() == 0)
+    {
+        v.emplace_back(n);
+        return;
+    }
     for (std::size_t i = 0; i < v.size(); i++)
     {
-        temp = static_cast<LargeType>(n) * v[i] + carry;
+        temp = static_cast<LargeType>(p) * v[i] + carry;
         carry = temp >> elemWIDTH;
         v[i] = static_cast<ElemType>(temp);
     }
@@ -569,21 +587,19 @@ void BigInteger::addMul(Vec & v, const ElemType n, int base)
         v.emplace_back(carry);
 }
 
-int BigInteger::convert(Vec & v, const char * str, std::size_t len, int base)
+int BigInteger::convert(Vec & v, const char * str, int base)
 {
     ElemType value = 0;
-    int sign = 0;
+    int sign = 1;
     int step = digitsPerElem[base];
+    ElemType max = maxPerElem[base];
     char ch;
 
     // get rid of leading 0 and blank
-    while (std::isblank(*str)) { str++; }
+    while (std::isspace(*str)) { str++; }
     ch = *str;
     if (ch == '+')
-    {
         str++;
-        sign = 1;
-    }
     else if (ch == '-')
     {
         str++;
@@ -593,22 +609,25 @@ int BigInteger::convert(Vec & v, const char * str, std::size_t len, int base)
 
     int i = 0;
     ch = *str;
-    // all zero
-    if (ch == 0)
+    if (ch == 0 || std::isspace(ch))
         return 0;
-    while (*str != 0)
+    do // TODO: optimization
     {
-        i++;
+        // i++;
         str++;
-        value *= base;
-        value += digit(ch, base);
-        if (i == step)
-        {
-            addMul(v, value, base);
-            value = 0;
-            i = 0;
-        }
-    }
+        addMul(v, base, digit(ch, base));
+        // value *= base;
+        // value += digit(ch, base);
+        // if (i == step)
+        // {
+        //     addMul(v, max, value);
+        //     value = 0;
+        //     i = 0;
+        // }
+        ch = *str;
+    } while (ch != 0 && !std::isspace(ch));
+    // if (value != 0)
+    //     addMul(v, max, value);
     return sign;
 }
 

@@ -14,12 +14,10 @@ target_include_directories(BigInteger
 add_subdirectory(googletest)
 enable_testing()
 
-aux_source_directory(test TESTS)
-add_executable(tests ${TESTS})
-target_link_libraries(tests
-    PRIVATE
-    # BigInteger
-    gtest_main
-)
+add_executable(constructorTest test/constructor.cpp)
+add_executable(ttest test/test.cpp)
+target_link_libraries(constructorTest BigInteger gtest_main)
+target_link_libraries(ttest BigInteger gtest_main)
 
-add_test(test_all tests)
+add_test(constructorTest constructorTest)
+add_test(ttest ttest)

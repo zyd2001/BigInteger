@@ -7,6 +7,7 @@
 #include <memory>
 #include <exception>
 #include <tuple>
+#include <climits>
 
 namespace zyd2001
 {
@@ -29,10 +30,14 @@ namespace zyd2001
         int sign = 0;
 
         const static int digitsPerElem[36];
+        const static ElemType maxPerElem[36];
+        const static SignedElemType signedElemMax = INT64_MAX;
+        const static SignedElemType signedElemMin = INT64_MIN;
         const static ElemType elemMAX = UINT64_MAX;
-        const static ElemType elemWIDTH = sizeof(ElemType);
+        const static ElemType elemWIDTH = sizeof(ElemType) * CHAR_BIT;
 
         const static BigInteger zero;
+        const static VecPtr zeroPtr;
 
         static VecPtr add(const Vec &, const ElemType);
         static VecPtr add(const Vec &, const Vec &);
@@ -61,21 +66,21 @@ namespace zyd2001
         inline static int digit(char, int base);
         inline static char toChar(const ElemType, int base);
         inline static ElemType convert(const char *, int base, int length);
-        static int convert(Vec &, const char *, std::size_t len, int base);
-        static void addMul(Vec &, const ElemType, int base);
+        static int convert(Vec &, const char *, int base);
+        static void addMul(Vec &, const ElemType, const ElemType);
         static ElemType divremMutable(Vec &, const ElemType);
         inline static void removeZero(Vec &);
 
+        BigInteger(const Vec , int sign);
+        BigInteger(const VecPtr, int sign);
     public:
-        BigInteger() : magnitude(std::make_shared<Vec >()) {}
+        BigInteger() : magnitude(zeroPtr) {}
         BigInteger(const SignedElemType);
+        BigInteger(const int);
         BigInteger(const std::string &);
         BigInteger(const std::string &, int base);
         BigInteger(const char *);
-        BigInteger(const char *, std::size_t len, int base);
         BigInteger(const char *, int base);
-        BigInteger(const Vec , int sign);
-        BigInteger(const VecPtr, int sign);
         BigInteger(const BigInteger &) = default;
         BigInteger operator+(const BigInteger &) const;
         BigInteger operator-(const BigInteger &) const;
@@ -102,6 +107,7 @@ namespace zyd2001
 
         friend std::ostream& operator<<(std::ostream&, const BigInteger &);
         friend std::istream& operator>>(std::istream&, BigInteger &);
+        friend class BigIntegerTest;
     };
 
     std::ostream& operator<<(std::ostream&, const BigInteger &);

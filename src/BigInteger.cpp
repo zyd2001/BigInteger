@@ -12,12 +12,13 @@ using namespace zyd2001;
  * 
  * @param i 
  */
-BigInteger::BigInteger(const SignedElemType i) : magnitude(std::make_shared<Vec>(1))
+BigInteger::BigInteger(const SignedElemType i) : magnitude(zeroPtr)
 {
     if (i == 0)
         sign = 0;
     else
     {
+        this->magnitude = std::make_shared<Vec>(1);
         if (i < 0)
             sign = -1;
         else
@@ -25,6 +26,8 @@ BigInteger::BigInteger(const SignedElemType i) : magnitude(std::make_shared<Vec>
         (*magnitude)[0] = i;
     }   
 }
+
+BigInteger::BigInteger(const int i) : BigInteger(static_cast<SignedElemType>(i)) {}
 
 /**
  * @brief Construct a new BigInteger object from a base 10 string
@@ -39,7 +42,7 @@ BigInteger::BigInteger(const std::string & str) : BigInteger(str, 10) {}
  * @param str 
  * @param base 2 < base <= 36
  */
-BigInteger::BigInteger(const std::string & str, int base) : BigInteger(str.c_str(), str.length(), base) {}
+BigInteger::BigInteger(const std::string & str, int base) : BigInteger(str.c_str(), base) {}
 
 /**
  * @brief Construct a new BigInteger object from a base 10 char string
@@ -48,17 +51,18 @@ BigInteger::BigInteger(const std::string & str, int base) : BigInteger(str.c_str
  */
 BigInteger::BigInteger(const char * str) : BigInteger(str, 10) {}
 
-BigInteger::BigInteger(const char * str, int base) : BigInteger(str, std::strlen(str), base) {}
-
-BigInteger::BigInteger(const char * str, std::size_t len, int base) : 
-    magnitude(std::make_shared<Vec>())
+BigInteger::BigInteger(const char * str, int base) : 
+    magnitude(zeroPtr)
 {
     if (base < 2 || base > 36)
         throw BigIntegerException("Invalid base");
-    if (len == 0)
+    if (std::strlen(str) == 0)
         sign = 0;
     else
-        sign = convert(*this->magnitude, str, len, base);
+    {
+        this->magnitude = std::make_shared<Vec>();
+        sign = convert(*this->magnitude, str, base);
+    }
 }
 
 BigInteger::BigInteger(const Vec e, int sign) : magnitude(std::make_shared<Vec>(e)), sign(sign) {}
