@@ -352,3 +352,4 @@ std::istream& zyd2001::operator>>(std::istream& i, BigInteger & num)
 }
 
 std::string BigInteger::toString() const { return toString(10); }
+std::string BigInteger::toString(int base) const { return toString(base, false); }

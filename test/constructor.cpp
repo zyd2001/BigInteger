@@ -230,7 +230,7 @@ TEST_F(ConstructorTest, constructFromStringException)
     const char * str2 = "a";
     const char * str3 = "  0a";
     const char * str4 = "  aabcz";
-    const char * str5 = "  00123d zz";
+    const char * str5 = "  00123df zz";
     std::string ss1(str1);
     std::string ss2(str2);
     std::string ss3(str3);
@@ -244,6 +244,8 @@ TEST_F(ConstructorTest, constructFromStringException)
     ASSERT_THROW(BigInteger i(ss3);, BigIntegerException);
     ASSERT_THROW(BigInteger i(str4, 35);, BigIntegerException);
     ASSERT_THROW(BigInteger i(ss4, 35);, BigIntegerException);
+    ASSERT_THROW(BigInteger i(ss4, 37);, BigIntegerException);
+    ASSERT_THROW(BigInteger i(ss4, 1);, BigIntegerException);
     ASSERT_NO_THROW(BigInteger i(str5, 16););
     ASSERT_NO_THROW(BigInteger i(ss5, 16););
 }

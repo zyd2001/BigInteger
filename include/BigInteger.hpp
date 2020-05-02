@@ -104,6 +104,7 @@ namespace zyd2001
         bool operator!=(const BigInteger &) const;
         std::string toString() const;
         std::string toString(int base) const;
+        std::string toString(int base, bool upper) const;
 
         friend std::ostream& operator<<(std::ostream&, const BigInteger &);
         friend std::istream& operator>>(std::istream&, BigInteger &);

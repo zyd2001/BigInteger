@@ -98,6 +98,7 @@ BigInteger::VecPtr BigInteger::add(const Vec & v1, const ElemType n)
 // assume v1 > v2
 BigInteger::VecPtr BigInteger::sub(const Vec & v1, const Vec & v2)
 {
+    assert(compare(v1, v2) > 1);
     int borrow = 0, br1, br2;
     auto res = std::make_shared<Vec>(v1.size());
     auto & r = *res;
@@ -126,6 +127,7 @@ BigInteger::VecPtr BigInteger::sub(const Vec & v1, const Vec & v2)
 // assume v1 > n
 BigInteger::VecPtr BigInteger::sub(const Vec & v1, const ElemType n)
 {
+    assert(v1.size() > 1 || (v1.size() == 1 && v1[0] > n));
     int borrow = 0;
     auto res = std::make_shared<Vec>(v1.size());
     auto & r = *res;
@@ -189,6 +191,7 @@ BigInteger::VecPtr BigInteger::longMul(const Vec & v1, const ElemType n)
     return res;
 }
 
+// TODO: generic
 BigInteger::TwoElemType BigInteger::mullh(const ElemType a, const ElemType b)
 {
     ElemType h, l;
@@ -370,20 +373,20 @@ std::tuple<BigInteger::VecPtr, BigInteger::VecPtr> BigInteger::divrem(const Vec 
 
 std::tuple<BigInteger::VecPtr, BigInteger::ElemType> BigInteger::divrem(const Vec & v, const ElemType n)
 {
-    auto res = std::make_shared<Vec>(v.size());
-    auto & r = *res;
+    VecPtr res;
     ElemType temp = v.back();
-    for (std::size_t i = v.size() - 2; i >= 0; i--)
+    // if first high elem isn't larger that n, r size is v.size() - 1
+    if (temp >= n)
     {
-        if (temp >= n)
-        {
-            r[i + 1] = temp / n;
-            temp %= n;
-        }
-        std::tie(r[i], temp) = divrem(temp, v[i], n);
+        res = std::make_shared<Vec>(v.size());
+        res->back() = temp / n;
+        temp = temp % n;
     }
-    if (r.back() == 0)
-        r.resize(v.size() - 1);
+    else
+        res = std::make_shared<Vec>(v.size() - 1);
+    auto & r = *res;
+    for (std::size_t i = v.size() - 1; i > 0; i--)
+        std::tie(r[i - 1], temp) = divrem(temp, v[i - 1], n);
     return {res, temp};
 }
 
@@ -634,15 +637,10 @@ int BigInteger::convert(Vec & v, const char * str, int base)
 BigInteger::ElemType BigInteger::divremMutable(Vec & v, const ElemType n)
 {
     ElemType temp = v.back();
-    for (std::size_t i = v.size() - 2; i >= 0; i--)
-    {
-        if (temp >= n)
-        {
-            v[i + 1] = temp / n;
-            temp %= n;
-        }
-        std::tie(v[i], temp) = divrem(temp, v[i], n);
-    }
+    v.back() = temp / n;
+    temp %= n;
+    for (std::size_t i = v.size() - 1; i > 0; i--)
+        std::tie(v[i - 1], temp) = divrem(temp, v[i - 1], n);
     if (v.back() == 0)
         v.resize(v.size() - 1);
     return temp;
@@ -654,15 +652,30 @@ char BigInteger::toChar(ElemType e, int base)
     if (e < 10)
         return '0' + e;
     else
-        return 'a' + 10 - e;
+        return 'a' + e - 10;
 }
 
-std::string BigInteger::toString(int base) const
+std::string BigInteger::toString(int base, bool upper) const
 {
+    if (base < 2 || base > 36)
+        throw BigIntegerException("Invalid base");
+    if (this->sign == 0)
+        return "0";
     std::ostringstream s;
+    VecPtr ptr;
     Vec v = *this->magnitude;
+    ElemType rem;
+    char ch;
     while (v.size() != 0)
-        s << toChar(divremMutable(v, base), base);
+    {
+        rem = divremMutable(v, base);
+        ch = toChar(rem, base);
+        if (upper)
+            ch = toupper(ch);
+        s << ch;
+    }
+    if (sign == -1)
+        s << '-';
     std::string str = s.str();
     std::reverse(str.begin(), str.end());
     return str;
