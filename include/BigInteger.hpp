@@ -27,13 +27,12 @@ namespace zyd2001
         VecPtr magnitude;
         int sign = 0;
 
-        const static int digitsPerInt[35];
+        const static int digitsPerElem[36];
         const static ElemType elemMAX = UINT64_MAX;
         const static ElemType elemWIDTH = sizeof(ElemType);
 
         const static BigInteger zero;
 
-        inline static int digit(char, int base);
         static VecPtr add(const Vec &, const ElemType);
         static VecPtr add(const Vec &, const Vec &);
         static VecPtr sub(const Vec &, const ElemType);
@@ -42,6 +41,7 @@ namespace zyd2001
         static VecPtr longMul(const Vec &, const ElemType);
         static VecPtr longMul(const Vec &, const Vec &);
         static VecPtr div(const Vec &, const ElemType);
+        static std::tuple<VecPtr, ElemType> divrem(const Vec &, const ElemType);
         static VecPtr div(const Vec &, const Vec &);
         static std::tuple<VecPtr, VecPtr> divrem(const Vec &, const Vec &);
         static void divFull(const Vec & u, const Vec & v, Vec & q, Vec & r, bool rem);
@@ -57,7 +57,13 @@ namespace zyd2001
         inline static TwoElemType divrem(const ElemType h, const ElemType l, const ElemType divisor);
         inline static TwoElemType mullh(const ElemType, const ElemType);
         static int compare(const Vec  &, const Vec  &);
-        static int convert(Vec &, const char *, int base);
+        inline static int digit(char, int base);
+        inline static char toChar(const ElemType, int base);
+        inline static ElemType convert(const char *, int base, int length);
+        static int convert(Vec &, const char *, std::size_t len, int base);
+        static void addMul(Vec &, const ElemType, int base);
+        static ElemType divremMutable(Vec &, const ElemType);
+        inline static void removeZero(Vec &);
 
     public:
         BigInteger() : magnitude(std::make_shared<Vec >()) {}

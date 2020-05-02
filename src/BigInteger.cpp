@@ -6,7 +6,6 @@
 #include <algorithm>
 
 using namespace zyd2001;
-using namespace std;
 
 /**
  * @brief Construct a new BigInteger object from an integer
@@ -59,7 +58,7 @@ BigInteger::BigInteger(const char * str, std::size_t len, int base) :
     if (len == 0)
         sign = 0;
     else
-        sign = convert(*this->magnitude, str, base);
+        sign = convert(*this->magnitude, str, len, base);
 }
 
 BigInteger::BigInteger(const Vec e, int sign) : magnitude(std::make_shared<Vec>(e)), sign(sign) {}
@@ -301,26 +300,17 @@ bool BigInteger::operator==(const BigInteger & n) const
 }
 bool BigInteger::operator!=(const BigInteger & n) const { return !(*this == n); }
 
-ostream& zyd2001::operator<<(ostream& o, const BigInteger & i)
+std::ostream& zyd2001::operator<<(std::ostream& o, const BigInteger & i)
 {
     o << i.toString();
     return o;
 }
-istream& zyd2001::operator>>(istream& i, BigInteger & num)
+std::istream& zyd2001::operator>>(std::istream& i, BigInteger & num)
 {
     std::string str;
     i >> str;
-    BigInteger newNum(str);
-    num = newNum;
+    num = BigInteger(str);
     return i;
 }
 
 std::string BigInteger::toString() const { return toString(10); }
-
-int main()
-{
-    BigInteger a("123abc343434", 16);
-    BigInteger b("1234343343434");
-    cout << a << endl;
-    // cout << b << endl;
-}
