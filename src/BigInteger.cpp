@@ -301,7 +301,10 @@ bool BigInteger::operator>(const BigInteger & n) const
         if (this->sign == 0)
             return false;
         else
-            return compare(*this->magnitude, *n.magnitude) > 0;
+            if (this->sign == 1)
+                return compare(*this->magnitude, *n.magnitude) > 0;
+            else
+                return compare(*this->magnitude, *n.magnitude) < 0;
     else
         return false;
 }
@@ -316,7 +319,10 @@ bool BigInteger::operator<(const BigInteger & n) const
         if (this->sign == 0)
             return false;
         else
-            return compare(*this->magnitude, *n.magnitude) < 0;
+            if (this->sign == 1)
+                return compare(*this->magnitude, *n.magnitude) < 0;
+            else
+                return compare(*this->magnitude, *n.magnitude) > 0;
     else
         return false;
 }

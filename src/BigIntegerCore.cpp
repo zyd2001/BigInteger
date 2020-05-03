@@ -19,10 +19,13 @@ int BigInteger::compare(const Vec & v1, const Vec & v2)
         return -1;
     else
     {
-        for (std::size_t i = v1.size() - 1; i >= 0; i--)
+        ElemType t1, t2;
+        for (std::size_t i = v1.size(); i > 0; i--)
         {
-            if (v1[i] != v2[i])
-                return (v1[i] > v2[i]) ? 1 : -1;
+            t1 = v1[i - 1];
+            t2 = v2[i - 1];
+            if (t1 != t2)
+                return (t1 > t2) ? 1 : -1;
         }
         return 0;
     }
@@ -30,11 +33,11 @@ int BigInteger::compare(const Vec & v1, const Vec & v2)
 
 void BigInteger::removeZero(Vec & v)
 {
-    std::size_t i = v.size() - 1;
-    for (; i >= 0; i--)
-        if (v[i] != 0)
+    std::size_t i = v.size();
+    for (; i > 0; i--)
+        if (v[i - 1] != 0)
             break;
-    v.resize(i + 1);
+    v.resize(i);
 }
 
 // swap two arguments to make sure v1 is large one

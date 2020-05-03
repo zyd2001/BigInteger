@@ -16,8 +16,11 @@ enable_testing()
 
 add_executable(constructorTest test/constructor.cpp)
 add_executable(toStringTest test/toString.cpp)
+add_executable(compareTest test/compare.cpp)
 target_link_libraries(constructorTest BigInteger gtest_main)
 target_link_libraries(toStringTest BigInteger gtest_main)
+target_link_libraries(compareTest BigInteger gtest_main)
 
 add_test(constructorTest constructorTest)
 add_test(toStringTest toStringTest)
+add_test(compareTest compareTest)
