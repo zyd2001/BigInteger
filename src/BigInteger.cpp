@@ -1,16 +1,16 @@
 #include "BigInteger.hpp"
+#include <algorithm>
 #include <cctype>
 #include <cstring>
-#include <sstream>
 #include <iostream>
-#include <algorithm>
+#include <sstream>
 
 using namespace zyd2001;
 
 /**
  * @brief Construct a new BigInteger object from an integer
- * 
- * @param i 
+ *
+ * @param i
  */
 BigInteger::BigInteger(const SignedElemType i) : magnitude(zeroPtr)
 {
@@ -24,35 +24,34 @@ BigInteger::BigInteger(const SignedElemType i) : magnitude(zeroPtr)
         else
             sign = 1;
         (*magnitude)[0] = i;
-    }   
+    }
 }
 
 BigInteger::BigInteger(const int i) : BigInteger(static_cast<SignedElemType>(i)) {}
 
 /**
  * @brief Construct a new BigInteger object from a base 10 string
- * 
- * @param str 
+ *
+ * @param str
  */
 BigInteger::BigInteger(const std::string & str) : BigInteger(str, 10) {}
 
 /**
  * @brief Construct a new BigInteger object from a string with custom base
- * 
- * @param str 
+ *
+ * @param str
  * @param base 2 < base <= 36
  */
 BigInteger::BigInteger(const std::string & str, int base) : BigInteger(str.c_str(), base) {}
 
 /**
  * @brief Construct a new BigInteger object from a base 10 char string
- * 
- * @param str 
+ *
+ * @param str
  */
 BigInteger::BigInteger(const char * str) : BigInteger(str, 10) {}
 
-BigInteger::BigInteger(const char * str, int base) : 
-    magnitude(zeroPtr)
+BigInteger::BigInteger(const char * str, int base) : magnitude(zeroPtr)
 {
     if (base < 2 || base > 36)
         throw BigIntegerException("Invalid base");
@@ -164,23 +163,17 @@ BigInteger::QuoRemType BigInteger::div(const BigInteger & n) const
     return {BigInteger(quo, quoSign), BigInteger(rem, this->sign)};
 }
 
-BigInteger BigInteger::operator-() const
-{
-    return BigInteger(this->magnitude, -this->sign);
-}
+BigInteger BigInteger::operator-() const { return BigInteger(this->magnitude, -this->sign); }
 
-BigInteger::operator bool() const
-{
-    return this->sign != 0;
-}
+BigInteger::operator bool() const { return this->sign != 0; }
 
-BigInteger BigInteger::operator<<(const ElemType i) const 
+BigInteger BigInteger::operator<<(const ElemType i) const
 {
     if (i == 0)
         return *this;
     return BigInteger(sl(*this->magnitude, i), this->sign);
 }
-BigInteger BigInteger::operator>>(const ElemType i) const 
+BigInteger BigInteger::operator>>(const ElemType i) const
 {
     if (i == 0)
         return *this;
@@ -188,7 +181,7 @@ BigInteger BigInteger::operator>>(const ElemType i) const
         return zero;
     return BigInteger(sr(*this->magnitude, i), this->sign);
 }
-BigInteger BigInteger::operator~() const 
+BigInteger BigInteger::operator~() const
 {
     if (sign == 0)
         return zero;
@@ -197,7 +190,7 @@ BigInteger BigInteger::operator~() const
     else
         return BigInteger(sub(*this->magnitude, 1), 1);
 }
-BigInteger BigInteger::operator&(const BigInteger & n) const 
+BigInteger BigInteger::operator&(const BigInteger & n) const
 {
     if (this == &n)
         return *this;
@@ -229,7 +222,7 @@ BigInteger BigInteger::operator&(const BigInteger & n) const
         return BigInteger(andnot(*this->magnitude, *v), 1);
     }
 }
-BigInteger BigInteger::operator|(const BigInteger & n) const 
+BigInteger BigInteger::operator|(const BigInteger & n) const
 {
     if (this == &n)
         return *this;
@@ -259,7 +252,7 @@ BigInteger BigInteger::operator|(const BigInteger & n) const
         return BigInteger(add(*andnot(*v, *this->magnitude), 1), -1);
     }
 }
-BigInteger BigInteger::operator^(const BigInteger & n) const 
+BigInteger BigInteger::operator^(const BigInteger & n) const
 {
     if (this == &n)
         return zero;
@@ -338,12 +331,12 @@ bool BigInteger::operator==(const BigInteger & n) const
 }
 bool BigInteger::operator!=(const BigInteger & n) const { return !(*this == n); }
 
-std::ostream& zyd2001::operator<<(std::ostream& o, const BigInteger & i)
+std::ostream & zyd2001::operator<<(std::ostream & o, const BigInteger & i)
 {
     o << i.toString();
     return o;
 }
-std::istream& zyd2001::operator>>(std::istream& i, BigInteger & num)
+std::istream & zyd2001::operator>>(std::istream & i, BigInteger & num)
 {
     std::string str;
     i >> str;

@@ -1,0 +1,14 @@
+BasedOnStyle: Microsoft
+AccessModifierOffset: '-4'
+AlignAfterOpenBracket: Align
+AlignEscapedNewlines: Left
+AlignAfterOpenBracket: DontAlign
+AllowShortBlocksOnASingleLine: 'true'
+AllowShortFunctionsOnASingleLine: All
+Cpp11BracedListStyle: 'true'
+IndentWrappedFunctionNames: 'true'
+NamespaceIndentation: All
+PointerAlignment: Middle
+ColumnLimit: 115
+Standard: Cpp11
+TabWidth: '4'

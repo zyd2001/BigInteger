@@ -1,10 +1,10 @@
 #include "BigInteger.hpp"
-#include <cctype>
-#include <cstring>
-#include <sstream>
-#include <iostream>
 #include <algorithm>
 #include <cassert>
+#include <cctype>
+#include <cstring>
+#include <iostream>
+#include <sstream>
 
 using namespace zyd2001;
 
@@ -38,16 +38,16 @@ void BigInteger::removeZero(Vec & v)
 }
 
 // swap two arguments to make sure v1 is large one
-#define swap_and_define \
+#define swap_and_define                        \
     auto & v1 = (a.size() < b.size()) ? b : a; \
     auto & v2 = (a.size() < b.size()) ? a : b; \
-    auto maxSize = v1.size(); \
+    auto maxSize = v1.size();                  \
     auto minSize = v2.size();
 
 BigInteger::VecPtr BigInteger::add(const Vec & a, const Vec & b)
 {
     int carry = 0, ca1, ca2;
-    swap_and_define
+    swap_and_define;
     auto res = std::make_shared<Vec>(maxSize + 1);
     auto & r = *res;
     ElemType s1, s2;
@@ -90,7 +90,7 @@ BigInteger::VecPtr BigInteger::add(const Vec & v1, const ElemType n)
     }
     if (carry)
         r.back() = 1;
-    else 
+    else
         r.resize(v1.size());
     return res;
 }
@@ -144,15 +144,12 @@ BigInteger::VecPtr BigInteger::sub(const Vec & v1, const ElemType n)
     return res;
 }
 
-BigInteger::VecPtr BigInteger::mul(const Vec & v1, const Vec & v2)
-{
-    return longMul(v1, v2);
-}
+BigInteger::VecPtr BigInteger::mul(const Vec & v1, const Vec & v2) { return longMul(v1, v2); }
 
 BigInteger::VecPtr BigInteger::longMul(const Vec & a, const Vec & b)
 {
-    swap_and_define 
-    auto res = std::make_shared<Vec>(maxSize + minSize); 
+    swap_and_define;
+    auto res = std::make_shared<Vec>(maxSize + minSize);
     auto & r = *res;
     LargeType temp;
     ElemType carry = 0;
@@ -192,6 +189,7 @@ BigInteger::VecPtr BigInteger::longMul(const Vec & v1, const ElemType n)
 }
 
 // TODO: generic
+// clang-format off
 BigInteger::TwoElemType BigInteger::mullh(const ElemType a, const ElemType b)
 {
     ElemType h, l;
@@ -216,6 +214,7 @@ BigInteger::TwoElemType BigInteger::divrem(const ElemType h, const ElemType l,
     );
     return {q, r};
 }
+// clang-format on
 
 int BigInteger::normalize(Vec & v)
 {
@@ -250,7 +249,7 @@ void BigInteger::subMutable(Vec & u, const Vec & s, const std::size_t index)
 
 /**
  * @brief helper function for knuth's division algorithm D4
- * 
+ *
  * @param q test quotient
  * @param index index j, substract start at index j of u
  * @return int return 1 if no borrow, 0 if borrow
@@ -337,7 +336,7 @@ void BigInteger::divFull(const Vec & a, const Vec & b, Vec & q, Vec & r, bool re
         temp = static_cast<LargeType>(u[0]) << (elemWIDTH - count);
         r[0] = static_cast<ElemType>(temp >> elemWIDTH);
         // remainder's size cannot be large than divisor
-        for (std::size_t i = 1; i < b.size(); i++) 
+        for (std::size_t i = 1; i < b.size(); i++)
         {
             if (u[i] == 0)
                 break;
@@ -390,35 +389,34 @@ std::tuple<BigInteger::VecPtr, BigInteger::ElemType> BigInteger::divrem(const Ve
     return {res, temp};
 }
 
-BigInteger::VecPtr BigInteger::div(const Vec & v, const ElemType n)
-{
-    return std::get<0>(divrem(v, n));
-}
+BigInteger::VecPtr BigInteger::div(const Vec & v, const ElemType n) { return std::get<0>(divrem(v, n)); }
 
-BigInteger::VecPtr BigInteger::andFunc(const Vec & a, const Vec & b) 
+BigInteger::VecPtr BigInteger::andFunc(const Vec & a, const Vec & b)
 {
-    swap_and_define
+    swap_and_define;
     // 111 & ~110101 = 111 & ~101
     auto res = std::make_shared<Vec>(minSize);
     auto & r = *res;
     std::size_t i = 0, t;
     auto count = v2.size();
-    std::generate_n(r.begin(), count, [&] () {
-        t = i; i++;
+    std::generate_n(r.begin(), count, [&]() {
+        t = i;
+        i++;
         return v1[t] & v2[t];
     });
     return res;
 }
-BigInteger::VecPtr BigInteger::andnot(const Vec & v1, const Vec & v2) 
+BigInteger::VecPtr BigInteger::andnot(const Vec & v1, const Vec & v2)
 {
     auto maxSize = std::max(v1.size(), v2.size());
     auto minSize = std::min(v1.size(), v2.size());
     // 111 & ~110101 = 111 & ~101
-    auto res = std::make_shared<Vec>(minSize); 
+    auto res = std::make_shared<Vec>(minSize);
     auto & r = *res;
     std::size_t i = 0, t;
-    std::generate_n(r.begin(), minSize, [&] () {
-        t = i; i++;
+    std::generate_n(r.begin(), minSize, [&]() {
+        t = i;
+        i++;
         return v1[t] & ~v2[t];
     });
     if (v1.size() > v2.size())
@@ -432,13 +430,14 @@ BigInteger::VecPtr BigInteger::andnot(const Vec & v1, const Vec & v2)
 }
 BigInteger::VecPtr BigInteger::orFunc(const Vec & a, const Vec & b)
 {
-    swap_and_define
-    auto res = std::make_shared<Vec>(maxSize); 
+    swap_and_define;
+    auto res = std::make_shared<Vec>(maxSize);
     auto & r = *res;
     std::size_t i = 0, t;
     auto count = v2.size();
-    std::generate_n(r.begin(), count, [&] () {
-        t = i; i++;
+    std::generate_n(r.begin(), count, [&]() {
+        t = i;
+        i++;
         return v1[t] | v2[t];
     });
     for (; i < maxSize; i++)
@@ -447,13 +446,14 @@ BigInteger::VecPtr BigInteger::orFunc(const Vec & a, const Vec & b)
 }
 BigInteger::VecPtr BigInteger::xorFunc(const Vec & a, const Vec & b)
 {
-    swap_and_define
-    auto res = std::make_shared<Vec>(maxSize); 
+    swap_and_define;
+    auto res = std::make_shared<Vec>(maxSize);
     auto & r = *res;
     std::size_t i = 0, t;
     auto count = v2.size();
-    std::generate_n(r.begin(), count, [&] () {
-        t = i; i++;
+    std::generate_n(r.begin(), count, [&]() {
+        t = i;
+        i++;
         return v1[t] ^ v2[t];
     });
     for (; i < maxSize; i++)
@@ -491,7 +491,7 @@ BigInteger::VecPtr BigInteger::sr(const Vec & v, const ElemType n)
     auto & r = *res;
     t = static_cast<LargeType>(v[count]) << (elemWIDTH - rem);
     r[0] = static_cast<ElemType>(t >> elemWIDTH);
-    for (std::size_t i = 1 + count; i < v.size(); i++) 
+    for (std::size_t i = 1 + count; i < v.size(); i++)
     {
         t = static_cast<LargeType>(v[i]) << (elemWIDTH - rem);
         r[i - count] = static_cast<ElemType>(t >> elemWIDTH);
@@ -503,27 +503,23 @@ BigInteger::VecPtr BigInteger::sr(const Vec & v, const ElemType n)
 }
 
 // TODO: Type
-const int BigInteger::digitsPerElem[36] = 
-    {0, 0, 63, 40, 31, 27, 24, 22, 21, 20, 19, 18, 17, 17, 16, 16, 15, 15, 
+const int BigInteger::digitsPerElem[36] = {0, 0, 63, 40, 31, 27, 24, 22, 21, 20, 19, 18, 17, 17, 16, 16, 15, 15,
     15, 15, 14, 14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12};
-const BigInteger::ElemType BigInteger::maxPerElem[36] = 
-    {1, 1, 9223372036854775808UL, 12157665459056928801UL, 4611686018427387904UL, 
-    7450580596923828125UL, 4738381338321616896UL, 3909821048582988049UL, 
-    9223372036854775808UL, 12157665459056928801UL, 10000000000000000000UL, 
-    5559917313492231481UL, 2218611106740436992UL, 8650415919381337933UL, 
-    2177953337809371136UL, 6568408355712890625UL, 1152921504606846976UL, 
-    2862423051509815793UL, 6746640616477458432UL, 15181127029874798299UL, 
-    1638400000000000000UL, 3243919932521508681UL, 6221821273427820544UL, 
-    11592836324538749809UL, 876488338465357824UL, 1490116119384765625UL, 
-    2481152873203736576UL, 4052555153018976267UL, 6502111422497947648UL, 
-    10260628712958602189UL, 15943230000000000000UL, 787662783788549761UL, 
+const BigInteger::ElemType BigInteger::maxPerElem[36] = {1, 1, 9223372036854775808UL, 12157665459056928801UL,
+    4611686018427387904UL, 7450580596923828125UL, 4738381338321616896UL, 3909821048582988049UL,
+    9223372036854775808UL, 12157665459056928801UL, 10000000000000000000UL, 5559917313492231481UL,
+    2218611106740436992UL, 8650415919381337933UL, 2177953337809371136UL, 6568408355712890625UL,
+    1152921504606846976UL, 2862423051509815793UL, 6746640616477458432UL, 15181127029874798299UL,
+    1638400000000000000UL, 3243919932521508681UL, 6221821273427820544UL, 11592836324538749809UL,
+    876488338465357824UL, 1490116119384765625UL, 2481152873203736576UL, 4052555153018976267UL,
+    6502111422497947648UL, 10260628712958602189UL, 15943230000000000000UL, 787662783788549761UL,
     1152921504606846976UL, 1667889514952984961UL, 2386420683693101056UL};
 
 /**
  * @brief helper Function to convert char to int
- * 
- * @param ch 
- * @param base 
+ *
+ * @param ch
+ * @param base
  * @throw BigIntegerException when ch is invalid
  */
 int BigInteger::digit(char ch, int base)
@@ -599,7 +595,8 @@ int BigInteger::convert(Vec & v, const char * str, int base)
     char ch;
 
     // get rid of leading 0 and blank
-    while (std::isspace(*str)) { str++; }
+    while (std::isspace(*str))
+        str++;
     ch = *str;
     if (ch == '+')
         str++;
@@ -608,7 +605,8 @@ int BigInteger::convert(Vec & v, const char * str, int base)
         str++;
         sign = -1;
     }
-    while (*str == '0') { str++; }
+    while (*str == '0')
+        str++;
 
     int i = 0;
     ch = *str;

@@ -1,19 +1,19 @@
 #ifndef __BIGINTEGER_HPP__
 #define __BIGINTEGER_HPP__
 
-#include <vector>
-#include <cstdint>
-#include <string>
-#include <memory>
-#include <exception>
-#include <tuple>
 #include <climits>
+#include <cstdint>
+#include <exception>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
 
 namespace zyd2001
 {
     /**
      * @brief arbitrary-precision integers
-     * 
+     *
      */
     struct BigInteger
     {
@@ -21,6 +21,7 @@ namespace zyd2001
         using ElemType = uint64_t;
         using SignedElemType = int64_t;
         using QuoRemType = std::tuple<BigInteger, BigInteger>;
+
     private:
         using LargeType = __uint128_t;
         using Vec = std::vector<ElemType>;
@@ -60,9 +61,10 @@ namespace zyd2001
         static VecPtr xorFunc(const Vec &, const Vec &);
         static VecPtr sl(const Vec &, const ElemType);
         static VecPtr sr(const Vec &, const ElemType);
-        inline static TwoElemType divrem(const ElemType h, const ElemType l, const ElemType divisor);
+        inline static TwoElemType divrem(
+            const ElemType h, const ElemType l, const ElemType divisor);
         inline static TwoElemType mullh(const ElemType, const ElemType);
-        static int compare(const Vec  &, const Vec  &);
+        static int compare(const Vec &, const Vec &);
         inline static int digit(char, int base);
         inline static char toChar(const ElemType, int base);
         inline static ElemType convert(const char *, int base, int length);
@@ -71,8 +73,9 @@ namespace zyd2001
         static ElemType divremMutable(Vec &, const ElemType);
         inline static void removeZero(Vec &);
 
-        BigInteger(const Vec , int sign);
+        BigInteger(const Vec, int sign);
         BigInteger(const VecPtr, int sign);
+
     public:
         BigInteger() : magnitude(zeroPtr) {}
         BigInteger(const SignedElemType);
@@ -106,13 +109,13 @@ namespace zyd2001
         std::string toString(int base) const;
         std::string toString(int base, bool upper) const;
 
-        friend std::ostream& operator<<(std::ostream&, const BigInteger &);
-        friend std::istream& operator>>(std::istream&, BigInteger &);
+        friend std::ostream & operator<<(std::ostream &, const BigInteger &);
+        friend std::istream & operator>>(std::istream &, BigInteger &);
         friend class BigIntegerTest;
     };
 
-    std::ostream& operator<<(std::ostream&, const BigInteger &);
-    std::istream& operator>>(std::istream&, BigInteger &);
+    std::ostream & operator<<(std::ostream &, const BigInteger &);
+    std::istream & operator>>(std::istream &, BigInteger &);
 
     struct BigIntegerException : std::exception
     {
@@ -120,7 +123,6 @@ namespace zyd2001
         std::string msg;
         BigIntegerException(const std::string & s) : msg(s) {}
     };
-}
-
+} // namespace zyd2001
 
 #endif
