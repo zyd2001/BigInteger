@@ -18,12 +18,16 @@ BigInteger::BigInteger(const SignedElemType i) : magnitude(zeroPtr)
         sign = 0;
     else
     {
+        ElemType n = i;
         this->magnitude = std::make_shared<Vec>(1);
         if (i < 0)
+        {
             sign = -1;
+            n = -i;
+        }
         else
             sign = 1;
-        (*magnitude)[0] = i;
+        (*magnitude)[0] = n;
     }
 }
 

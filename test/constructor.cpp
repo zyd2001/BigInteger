@@ -28,7 +28,7 @@ TEST_F(ConstructorTest, constructFromN1)
 {
     BigInteger i(-1);
     ASSERT_EQ(mag(i)->size(), 1);
-    ASSERT_EQ(mag(i)->at(0), -1);
+    ASSERT_EQ(mag(i)->at(0), 1);
     ASSERT_EQ(sign(i), -1);
 }
 
@@ -44,7 +44,7 @@ TEST_F(ConstructorTest, constructFromINT_MIN)
 {
     BigInteger i(INT_MIN);
     ASSERT_EQ(mag(i)->size(), 1);
-    ASSERT_EQ(mag(i)->at(0), INT_MAX + 1);
+    ASSERT_EQ(mag(i)->at(0), static_cast<BigInteger::SignedElemType>(INT_MAX) + 1);
     ASSERT_EQ(sign(i), -1);
 }
 
