@@ -11,9 +11,10 @@ TEST_F(ConstructorTest, defaultConstructor)
 
 TEST_F(ConstructorTest, constructFrom0)
 {
-    BigInteger i(0);
+    BigInteger i(0), j;
     ASSERT_EQ(mag(i)->size(), 0);
     ASSERT_EQ(sign(i), 0);
+    ASSERT_EQ(mag(i), mag(j));
 }
 
 TEST_F(ConstructorTest, constructFrom1)
@@ -192,7 +193,6 @@ TEST_F(ConstructorTest, constructFromBase10String7)
     ASSERT_EQ(sign(i), 1);
     ASSERT_EQ(*mag(i), *mag(s));
     ASSERT_EQ(sign(i), sign(s));
-    
 }
 
 TEST_F(ConstructorTest, constructFromBase10String8)
@@ -302,4 +302,16 @@ TEST_F(ConstructorTest, constructFromOtherBaseString4)
     ASSERT_EQ(sign(i), -1);
     ASSERT_EQ(*mag(i), *mag(s));
     ASSERT_EQ(sign(i), sign(s));
+}
+
+TEST_F(ConstructorTest, copyConstructorTest0)
+{
+    BigInteger i, j(123123);
+    BigInteger c(-1234567890);
+    i = j;
+    ASSERT_EQ(mag(i), mag(j));
+    ASSERT_EQ(sign(i), sign(j));
+    j = c;
+    ASSERT_EQ(mag(c), mag(j));
+    ASSERT_EQ(sign(c), sign(j));
 }

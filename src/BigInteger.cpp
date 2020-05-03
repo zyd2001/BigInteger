@@ -183,7 +183,11 @@ BigInteger BigInteger::operator>>(const ElemType i) const
         return *this;
     if ((i / elemWIDTH) >= this->magnitude->size())
         return zero;
-    return BigInteger(sr(*this->magnitude, i), this->sign);
+    auto ptr = sr(*this->magnitude, i);
+    if (ptr->size() == 0)
+        return zero;
+    else
+        return BigInteger(ptr, this->sign);
 }
 BigInteger BigInteger::operator~() const
 {
@@ -300,11 +304,10 @@ bool BigInteger::operator>(const BigInteger & n) const
     if (this->sign == n.sign)
         if (this->sign == 0)
             return false;
+        else if (this->sign == 1)
+            return compare(*this->magnitude, *n.magnitude) > 0;
         else
-            if (this->sign == 1)
-                return compare(*this->magnitude, *n.magnitude) > 0;
-            else
-                return compare(*this->magnitude, *n.magnitude) < 0;
+            return compare(*this->magnitude, *n.magnitude) < 0;
     else
         return false;
 }
@@ -318,11 +321,10 @@ bool BigInteger::operator<(const BigInteger & n) const
     if (this->sign == n.sign)
         if (this->sign == 0)
             return false;
+        else if (this->sign == 1)
+            return compare(*this->magnitude, *n.magnitude) < 0;
         else
-            if (this->sign == 1)
-                return compare(*this->magnitude, *n.magnitude) < 0;
-            else
-                return compare(*this->magnitude, *n.magnitude) > 0;
+            return compare(*this->magnitude, *n.magnitude) > 0;
     else
         return false;
 }

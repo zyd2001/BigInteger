@@ -8,8 +8,9 @@
 
 using namespace zyd2001;
 
-const BigInteger BigInteger::zero = BigInteger();
+// initialize order is important, otherwise zero will have null ptr
 const BigInteger::VecPtr BigInteger::zeroPtr = std::make_shared<Vec>();
+const BigInteger BigInteger::zero = BigInteger();
 
 int BigInteger::compare(const Vec & v1, const Vec & v2)
 {

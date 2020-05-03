@@ -61,8 +61,7 @@ namespace zyd2001
         static VecPtr xorFunc(const Vec &, const Vec &);
         static VecPtr sl(const Vec &, const ElemType);
         static VecPtr sr(const Vec &, const ElemType);
-        inline static TwoElemType divrem(
-            const ElemType h, const ElemType l, const ElemType divisor);
+        inline static TwoElemType divrem(const ElemType h, const ElemType l, const ElemType divisor);
         inline static TwoElemType mullh(const ElemType, const ElemType);
         static int compare(const Vec &, const Vec &);
         inline static int digit(char, int base);
