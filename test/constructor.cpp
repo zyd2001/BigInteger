@@ -278,6 +278,19 @@ TEST_F(ConstructorTest, constructFromOtherBaseString2)
 
 TEST_F(ConstructorTest, constructFromOtherBaseString3)
 {
+    const char * str = "-00ABC";
+    std::string ss(str);
+    BigInteger i(str, 16);
+    BigInteger s(ss, 16);
+    ASSERT_EQ(mag(i)->size(), 1);
+    ASSERT_EQ(mag(i)->at(0), 0xabc);
+    ASSERT_EQ(sign(i), -1);
+    ASSERT_EQ(*mag(i), *mag(s));
+    ASSERT_EQ(sign(i), sign(s));
+}
+
+TEST_F(ConstructorTest, constructFromOtherBaseString4)
+{
     const char * str = "-00abcdqwexzhahahaazahzrsdyidazazzxd";
     std::string ss(str);
     BigInteger i(str, 36);

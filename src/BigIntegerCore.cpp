@@ -616,7 +616,7 @@ int BigInteger::convert(Vec & v, const char * str, int base)
     {
         // i++;
         str++;
-        addMul(v, base, digit(ch, base));
+        addMul(v, base, digit(std::tolower(ch), base));
         // value *= base;
         // value += digit(ch, base);
         // if (i == step)
