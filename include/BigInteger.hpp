@@ -73,8 +73,8 @@ namespace zyd2001
         inline static void removeZero(Vec &);
         inline static bool equalNegOne(const BigInteger &);
 
-        BigInteger(const Vec, int sign);
-        BigInteger(const VecPtr, int sign);
+        BigInteger(const Vec &, int sign);
+        BigInteger(const VecPtr &, int sign);
 
     public:
         BigInteger() : magnitude(zeroPtr) {}
