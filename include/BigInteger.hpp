@@ -118,9 +118,12 @@ namespace zyd2001
 
     struct BigIntegerException : std::exception
     {
-    public:
+    private:
         std::string msg;
+
+    public:
         BigIntegerException(const std::string & s) : msg(s) {}
+        const char * what() const noexcept override { return msg.c_str(); }
     };
 } // namespace zyd2001
 

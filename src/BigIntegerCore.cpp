@@ -54,20 +54,22 @@ BigInteger::VecPtr BigInteger::add(const Vec & a, const Vec & b)
     swap_and_define;
     auto res = std::make_shared<Vec>(maxSize + 1);
     auto & r = *res;
-    ElemType s1, s2;
+    ElemType s1, s2, t;
     for (std::size_t i = 0; i < minSize; i++)
     {
-        s1 = v1[i] + v2[i];
-        ca1 = s1 < v1[i];
+        t = v1[i];
+        s1 = t + v2[i];
+        ca1 = s1 < t;
         s2 = s1 + carry;
-        ca2 = s2 == 0;
+        ca2 = s2 < s1;
         carry = ca1 | ca2;
         r[i] = s2;
     }
-    for (std::size_t i = minSize; i < maxSize && carry != 0; i++)
+    for (std::size_t i = minSize; i < maxSize; i++)
     {
-        s1 = v1[i] + carry;
-        carry = s1 == 0; // if overflow, only possibility is 0
+        t = v1[i];
+        s1 = t + carry;
+        carry = s1 < t;
         r[i] = s1;
     }
     if (carry)
@@ -82,14 +84,15 @@ BigInteger::VecPtr BigInteger::add(const Vec & v1, const ElemType n)
     int carry = 0;
     auto res = std::make_shared<Vec>(v1.size() + 1);
     auto & r = *res;
-    ElemType sl;
+    ElemType sl, t;
     sl = v1[0] + n;
     carry = sl < v1[0];
     r[0] = sl;
-    for (std::size_t i = 1; i < v1.size() && carry != 0; i++)
+    for (std::size_t i = 1; i < v1.size(); i++)
     {
-        sl = v1[i] + carry;
-        carry = sl == 0; // if overflow, only possibility is 0
+        t = v1[i];
+        sl = t + carry;
+        carry = sl < t;
         r[i] = sl;
     }
     if (carry)
@@ -102,26 +105,28 @@ BigInteger::VecPtr BigInteger::add(const Vec & v1, const ElemType n)
 // assume v1 > v2
 BigInteger::VecPtr BigInteger::sub(const Vec & v1, const Vec & v2)
 {
-    assert(compare(v1, v2) > 1);
+    assert(compare(v1, v2) > 0);
     int borrow = 0, br1, br2;
     auto res = std::make_shared<Vec>(v1.size());
     auto & r = *res;
-    ElemType s1, s2;
+    ElemType s1, s2, t;
     for (std::size_t i = 0; i < v2.size(); i++)
     {
         // if overflow, the result will just be uintmax + v1[i] - v[2]
         // because of 2's complement
-        s1 = v1[i] - v2[i];
-        br1 = s1 > v1[i];
+        t = v1[i];
+        s1 = t - v2[i];
+        br1 = s1 > t;
         s2 = s1 - borrow;
-        br2 = s2 == elemMAX;
+        br2 = s2 > s1;
         borrow = br1 | br2;
         r[i] = s2;
     }
-    for (std::size_t i = v2.size(); i < v1.size() && borrow != 0; i++)
+    for (std::size_t i = v2.size(); i < v1.size(); i++)
     {
-        s1 = v1[i] - borrow;
-        borrow = s1 == elemMAX;
+        t = v1[i];
+        s1 = t - borrow;
+        borrow = s1 > t;
         r[i] = s1;
     }
     removeZero(r);
@@ -135,13 +140,14 @@ BigInteger::VecPtr BigInteger::sub(const Vec & v1, const ElemType n)
     int borrow = 0;
     auto res = std::make_shared<Vec>(v1.size());
     auto & r = *res;
-    ElemType s1;
+    ElemType s1, t;
     r[0] = v1[0] - n;
     borrow = v1[0] < n;
-    for (std::size_t i = 1; i < v1.size() && borrow != 0; i++)
+    for (std::size_t i = 1; i < v1.size(); i++)
     {
-        s1 = v1[i] - borrow;
-        borrow = s1 == elemMAX;
+        t = v1[i];
+        s1 = t - borrow;
+        borrow = s1 > t;
         r[i] = s1;
     }
     removeZero(r);
@@ -530,7 +536,7 @@ int BigInteger::digit(char ch, int base)
 {
     if (base > 10)
     {
-        if (ch >= '0' && ch < '9')
+        if (ch >= '0' && ch <= '9')
             return ch - '0';
         else if (ch >= 'a' && ch < 'a' + base - 10)
             return ch - 'a' + 10;

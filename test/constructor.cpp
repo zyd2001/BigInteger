@@ -93,13 +93,18 @@ TEST_F(ConstructorTest, constructFromSpaceString)
 TEST_F(ConstructorTest, constructFrom0String)
 {
     const char * str = "   0000";
-    BigInteger i(str);
-    std::string ss(str);
-    BigInteger s(ss);
+    const char * str1 = "  -0000";
+    BigInteger i(str), i1(str1);
+    std::string ss(str), ss1(str1);
+    BigInteger s(ss), s1(ss1);
     ASSERT_EQ(mag(i)->size(), 0);
     ASSERT_EQ(sign(i), 0);
     ASSERT_EQ(*mag(i), *mag(s));
     ASSERT_EQ(sign(i), sign(s));
+    ASSERT_EQ(mag(i1)->size(), 0);
+    ASSERT_EQ(sign(i1), 0);
+    ASSERT_EQ(*mag(i1), *mag(s1));
+    ASSERT_EQ(sign(i1), sign(s1));
 }
 
 TEST_F(ConstructorTest, constructFromBase10String1)
@@ -224,6 +229,22 @@ TEST_F(ConstructorTest, constructFromBase10String9)
     ASSERT_EQ(sign(i), sign(s));
 }
 
+// TODO: Type
+TEST_F(ConstructorTest, constructFromBase10String10)
+{
+    const char * str = "340282366920938463463374607431768211456";
+    BigInteger i(str);
+    std::string ss(str);
+    BigInteger s(ss);
+    ASSERT_EQ(mag(i)->size(), 3);
+    ASSERT_EQ(mag(i)->at(0), 0);
+    ASSERT_EQ(mag(i)->at(1), 0);
+    ASSERT_EQ(mag(i)->at(2), 1);
+    ASSERT_EQ(sign(i), 1);
+    ASSERT_EQ(*mag(i), *mag(s));
+    ASSERT_EQ(sign(i), sign(s));
+}
+
 TEST_F(ConstructorTest, constructFromStringException)
 {
     const char * str1 = "0-0001234";
@@ -291,14 +312,15 @@ TEST_F(ConstructorTest, constructFromOtherBaseString3)
 
 TEST_F(ConstructorTest, constructFromOtherBaseString4)
 {
-    const char * str = "-00abcdqwexzhahahaazahzrsdyidazazzxd";
+    const char * str = "-00abcdqwexzhahahaazahzrsdyidazazzxd1234567890";
     std::string ss(str);
     BigInteger i(str, 36);
     BigInteger s(ss, 36);
-    ASSERT_EQ(mag(i)->size(), 3);
-    ASSERT_EQ(mag(i)->at(0), 2776039359460685473UL);
-    ASSERT_EQ(mag(i)->at(1), 12843823637769055684UL);
-    ASSERT_EQ(mag(i)->at(2), 1920058322246UL);
+    ASSERT_EQ(mag(i)->size(), 4);
+    ASSERT_EQ(mag(i)->at(0), 1112775687446536068UL);
+    ASSERT_EQ(mag(i)->at(1), 6134917919516943653UL);
+    ASSERT_EQ(mag(i)->at(2), 3410682659916918515UL);
+    ASSERT_EQ(mag(i)->at(3), 380556992UL);
     ASSERT_EQ(sign(i), -1);
     ASSERT_EQ(*mag(i), *mag(s));
     ASSERT_EQ(sign(i), sign(s));
