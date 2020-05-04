@@ -209,7 +209,7 @@ BigInteger::TwoElemType BigInteger::mullh(const ElemType a, const ElemType b)
     (
         "mulq %2"
             : "=a"(l), "=d"(h)
-            : "%r"(a), "d"(b)
+            : "%r"(a), "a"(b)
     );
     return {h, l};
 }
@@ -246,17 +246,25 @@ int BigInteger::normalize(Vec & v)
 void BigInteger::subMutable(Vec & u, const Vec & s, const std::size_t index)
 {
     int borrow = 0, br1, br2;
-    ElemType s1, s2;
-    for (std::size_t i = 0, j = index; i < s.size(); i++, j++)
+    ElemType s1, s2, t;
+    std::size_t n = s.size();
+    for (std::size_t i = 0, j = index; i < n; i++, j++)
     {
-        s1 = u[j] - s[i];
-        br1 = s1 > u[j];
+        t = u[j];
+        s1 = t - s[i];
+        br1 = s1 > t;
         s2 = s1 - borrow;
-        br2 = s2 == elemMAX;
+        br2 = s2 > s1;
         borrow = br1 | br2;
         u[j] = s2;
     }
-    assert(!borrow);
+    if (borrow)
+    {
+        t = u[index + n];
+        s1 = t - borrow;
+        u[index + n] = s1;
+        assert(!(s1 > t));
+    }
 }
 
 /**
@@ -281,13 +289,22 @@ int BigInteger::subMul(Vec & u, const Vec & v, const ElemType q, const std::size
 
     // D5
     // test if the last substraction will cause borrow
-    if (compare(u, v) < 0)
-        return 0;
-    else
-    {
-        subMutable(u, v, index);
-        return 1;
-    }
+    std::size_t n = v.size();
+    ElemType t1, t2;
+    if (u[index + n] == 0)
+        for (std::size_t i = n; i > 0; i--)
+        {
+            t1 = u[i + index - 1];
+            t2 = v[i - 1];
+            if (t1 < t2)
+                return 0;
+            else if (t1 > t2)
+                break;
+            else
+                continue;
+        }
+    subMutable(u, v, index);
+    return 1;
 }
 
 void BigInteger::divFull(const Vec & a, const Vec & b, Vec & q, Vec & r, bool remainder)
@@ -303,19 +320,21 @@ void BigInteger::divFull(const Vec & a, const Vec & b, Vec & q, Vec & r, bool re
     int count = normalize(v);
     auto up = sl(a, count);
     auto u = *up;
+    u.resize(m + n + 1);
     // D2 loop
-    for (std::size_t j = m; j >= 0; j--)
+    divisor = v[n - 1];
+    for (std::size_t j = m + 1; j > 0; j--)
     {
-        high = u[n + j];
-        low = u[n - 1 + j];
-        divisor = v[n - 1];
+        high = u[n + j - 1];
+        low = u[n - 1 + j - 1];
 
         // D3
         assert(high <= divisor);
         if (high == divisor)
         {
-            // quo == base condition
+            // quo == base
             // do the substraction and addtion
+            assert(low < divisor);
             quo = elemMAX;
             rem = low + divisor;
             if (rem < low && rem > 0) // !(r < base)
@@ -325,7 +344,7 @@ void BigInteger::divFull(const Vec & a, const Vec & b, Vec & q, Vec & r, bool re
         }
         else
             std::tie(quo, rem) = divrem(high, low, divisor);
-        while (!pass && (mullh(quo, v[n - 2]) > std::make_tuple(rem, u[n - 2 + j])))
+        while (!pass && (mullh(quo, v[n - 2]) > std::make_tuple(rem, u[n - 2 + j - 1])))
         {
             --quo;
             t = rem + divisor;
@@ -335,10 +354,10 @@ void BigInteger::divFull(const Vec & a, const Vec & b, Vec & q, Vec & r, bool re
                 rem = t;
         }
         // D4
-        if (!subMul(u, v, quo, j))
+        if (!subMul(u, v, quo, j - 1))
             // D6, no need for add back, handled in subMul
             ++quo;
-        q[j] = quo;
+        q[j - 1] = quo;
     }
 
     // get remainder
@@ -361,6 +380,8 @@ void BigInteger::divFull(const Vec & a, const Vec & b, Vec & q, Vec & r, bool re
 
 BigInteger::VecPtr BigInteger::div(const Vec & a, const Vec & b)
 {
+    if (b.size() == 1)
+        return div(a, b.back());
     auto res = std::make_shared<Vec>(a.size() - b.size() + 1);
     auto & r = *res;
     divFull(a, b, r, r, false);
@@ -371,6 +392,15 @@ BigInteger::VecPtr BigInteger::div(const Vec & a, const Vec & b)
 
 std::tuple<BigInteger::VecPtr, BigInteger::VecPtr> BigInteger::divrem(const Vec & a, const Vec & b)
 {
+    if (b.size() == 1)
+    {
+        ElemType r;
+        VecPtr quo;
+        std::tie(quo, r) = divrem(a, b.back());
+        if (r == 0)
+            return {quo, zeroPtr};
+        return {quo, std::make_shared<Vec>(Vec{r})};
+    }
     auto quo = std::make_shared<Vec>(a.size() - b.size() + 1);
     auto & q = *quo;
     auto rem = std::make_shared<Vec>(b.size());

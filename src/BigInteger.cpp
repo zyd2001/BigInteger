@@ -80,8 +80,9 @@ BigInteger::BigInteger(const char * str, int base) : magnitude(zeroPtr)
     }
 }
 
-BigInteger::BigInteger(const Vec e, int sign) : magnitude(std::make_shared<Vec>(e)), sign(sign) {}
-BigInteger::BigInteger(const VecPtr e, int sign) : magnitude(e), sign(sign) {}
+BigInteger::BigInteger(const Vec & e, int sign) : magnitude(std::make_shared<Vec>(e)), sign(sign) {}
+// TODO: handle zero in constructor
+BigInteger::BigInteger(const VecPtr & e, int sign) : magnitude(e), sign(sign) {}
 
 BigInteger BigInteger::operator+(const BigInteger & n) const
 {
@@ -130,10 +131,10 @@ BigInteger BigInteger::operator*(const BigInteger & n) const
 
 BigInteger BigInteger::operator/(const BigInteger & n) const
 {
+    if (n.sign == 0)
+        throw BigIntegerException("Divide by zero");
     if (this->sign == 0)
         return zero;
-    if (n.sign == 0)
-        throw new BigIntegerException("Divide by zero");
     int cmp = compare(*this->magnitude, *n.magnitude);
     if (cmp < 0)
         return zero;
@@ -147,25 +148,29 @@ BigInteger BigInteger::operator/(const BigInteger & n) const
 
 BigInteger BigInteger::operator%(const BigInteger & n) const
 {
+    if (n.sign == 0)
+        throw BigIntegerException("Divide by zero");
     if (this->sign == 0)
         return zero;
-    if (n.sign == 0)
-        throw new BigIntegerException("Divide by zero");
     int cmp = compare(*this->magnitude, *n.magnitude);
     if (cmp < 0)
         return *this;
     if (cmp == 0)
         return zero;
     // remainder's sign always follow dividend
-    return BigInteger(std::get<1>(divrem(*this->magnitude, *n.magnitude)), this->sign);
+    // handle remainder zero
+    auto rem = std::get<1>(divrem(*this->magnitude, *n.magnitude));
+    if (rem->size() == 0)
+        return zero;
+    return BigInteger(rem, this->sign);
 }
 
 BigInteger::QuoRemType BigInteger::div(const BigInteger & n) const
 {
+    if (n.sign == 0)
+        throw BigIntegerException("Divide by zero");
     if (this->sign == 0)
         return {zero, zero};
-    if (n.sign == 0)
-        throw new BigIntegerException("Divide by zero");
     int cmp = compare(*this->magnitude, *n.magnitude);
     if (cmp < 0)
         return {zero, *this};
@@ -176,6 +181,8 @@ BigInteger::QuoRemType BigInteger::div(const BigInteger & n) const
     int quoSign = (this->sign == n.sign) ? 1 : -1;
     VecPtr quo, rem;
     std::tie(quo, rem) = divrem(*this->magnitude, *n.magnitude);
+    if (rem->size() == 0)
+        return {BigInteger(quo, quoSign), zero};
     return {BigInteger(quo, quoSign), BigInteger(rem, this->sign)};
 }
 
