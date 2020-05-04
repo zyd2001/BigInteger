@@ -81,6 +81,7 @@ BigInteger::VecPtr BigInteger::add(const Vec & a, const Vec & b)
 
 BigInteger::VecPtr BigInteger::add(const Vec & v1, const ElemType n)
 {
+    assert(v1.size() > 0);
     int carry = 0;
     auto res = std::make_shared<Vec>(v1.size() + 1);
     auto & r = *res;
@@ -102,6 +103,7 @@ BigInteger::VecPtr BigInteger::add(const Vec & v1, const ElemType n)
     return res;
 }
 
+// TODO: last nonzero
 // assume v1 > v2
 BigInteger::VecPtr BigInteger::sub(const Vec & v1, const Vec & v2)
 {
@@ -133,10 +135,10 @@ BigInteger::VecPtr BigInteger::sub(const Vec & v1, const Vec & v2)
     return res;
 }
 
-// assume v1 > n
+// assume v1 >= n
 BigInteger::VecPtr BigInteger::sub(const Vec & v1, const ElemType n)
 {
-    assert(v1.size() > 1 || (v1.size() == 1 && v1[0] > n));
+    assert(v1.size() > 1 || (v1.size() == 1 && v1[0] >= n));
     int borrow = 0;
     auto res = std::make_shared<Vec>(v1.size());
     auto & r = *res;
@@ -374,8 +376,9 @@ std::tuple<BigInteger::VecPtr, BigInteger::VecPtr> BigInteger::divrem(const Vec 
     auto rem = std::make_shared<Vec>(b.size());
     auto & r = *rem;
     divFull(a, b, q, r, true);
-    if (r.back() == 0)
-        r.resize(a.size() - b.size());
+    if (q.back() == 0)
+        q.resize(a.size() - b.size());
+    // remainder comes from u be substracted several times, so removeZero
     removeZero(r);
     return {quo, rem};
 }
@@ -404,12 +407,11 @@ BigInteger::VecPtr BigInteger::div(const Vec & v, const ElemType n) { return std
 BigInteger::VecPtr BigInteger::andFunc(const Vec & a, const Vec & b)
 {
     swap_and_define;
-    // 111 & ~110101 = 111 & ~101
+    // 111 & 110101 = 000111 & 110101
     auto res = std::make_shared<Vec>(minSize);
     auto & r = *res;
     std::size_t i = 0, t;
-    auto count = v2.size();
-    std::generate_n(r.begin(), count, [&]() {
+    std::generate_n(r.begin(), minSize, [&]() {
         t = i;
         i++;
         return v1[t] & v2[t];
@@ -420,7 +422,7 @@ BigInteger::VecPtr BigInteger::andnot(const Vec & v1, const Vec & v2)
 {
     auto maxSize = std::max(v1.size(), v2.size());
     auto minSize = std::min(v1.size(), v2.size());
-    // 111 & ~110101 = 111 & ~101
+    // 111 & ~110101 = 000111 & ~110101
     auto res = std::make_shared<Vec>(minSize);
     auto & r = *res;
     std::size_t i = 0, t;

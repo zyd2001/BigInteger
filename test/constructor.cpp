@@ -5,15 +5,13 @@ using ConstructorTest = BigIntegerTest;
 TEST_F(ConstructorTest, defaultConstructor)
 {
     BigInteger i;
-    ASSERT_EQ(mag(i)->size(), 0);
-    ASSERT_EQ(sign(i), 0);
+    zeroTest(i);
 }
 
 TEST_F(ConstructorTest, constructFrom0)
 {
     BigInteger i(0), j;
-    ASSERT_EQ(mag(i)->size(), 0);
-    ASSERT_EQ(sign(i), 0);
+    zeroTest(i);
     ASSERT_EQ(mag(i), mag(j));
 }
 
@@ -72,8 +70,7 @@ TEST_F(ConstructorTest, constructFromEmptyString)
     BigInteger i(str);
     std::string ss(str);
     BigInteger s(ss);
-    ASSERT_EQ(mag(i)->size(), 0);
-    ASSERT_EQ(sign(i), 0);
+    zeroTest(i);
     ASSERT_EQ(*mag(i), *mag(s));
     ASSERT_EQ(sign(i), sign(s));
 }
@@ -84,8 +81,7 @@ TEST_F(ConstructorTest, constructFromSpaceString)
     BigInteger i(str);
     std::string ss(str);
     BigInteger s(ss);
-    ASSERT_EQ(mag(i)->size(), 0);
-    ASSERT_EQ(sign(i), 0);
+    zeroTest(i);
     ASSERT_EQ(*mag(i), *mag(s));
     ASSERT_EQ(sign(i), sign(s));
 }
@@ -97,12 +93,10 @@ TEST_F(ConstructorTest, constructFrom0String)
     BigInteger i(str), i1(str1);
     std::string ss(str), ss1(str1);
     BigInteger s(ss), s1(ss1);
-    ASSERT_EQ(mag(i)->size(), 0);
-    ASSERT_EQ(sign(i), 0);
+    zeroTest(i);
     ASSERT_EQ(*mag(i), *mag(s));
     ASSERT_EQ(sign(i), sign(s));
-    ASSERT_EQ(mag(i1)->size(), 0);
-    ASSERT_EQ(sign(i1), 0);
+    zeroTest(i1);
     ASSERT_EQ(*mag(i1), *mag(s1));
     ASSERT_EQ(sign(i1), sign(s1));
 }

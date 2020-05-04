@@ -1,11 +1,23 @@
 #include "BigInteger.hpp"
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <cstring>
 #include <iostream>
 #include <sstream>
 
 using namespace zyd2001;
+
+bool BigInteger::equalNegOne(const BigInteger & n)
+{
+    if (n.magnitude->size() > 1)
+        return false;
+    if (n.sign != -1)
+        return false;
+    if (n.magnitude->back() == 1)
+        return true;
+    return false;
+}
 
 /**
  * @brief Construct a new BigInteger object from an integer
@@ -175,15 +187,20 @@ BigInteger BigInteger::operator<<(const ElemType i) const
 {
     if (i == 0)
         return *this;
+    if (this->sign == 0)
+        return zero;
     return BigInteger(sl(*this->magnitude, i), this->sign);
 }
 BigInteger BigInteger::operator>>(const ElemType i) const
 {
     if (i == 0)
         return *this;
+    if (this->sign == 0)
+        return zero;
     if ((i / elemWIDTH) >= this->magnitude->size())
         return zero;
-    auto ptr = sr(*this->magnitude, i);
+    // prevent become zero but have sign
+    auto && ptr = sr(*this->magnitude, i);
     if (ptr->size() == 0)
         return zero;
     else
@@ -204,6 +221,10 @@ BigInteger BigInteger::operator&(const BigInteger & n) const
         return *this;
     if (this->sign == 0 || n.sign == 0)
         return zero;
+    if (equalNegOne(*this))
+        return n;
+    if (equalNegOne(n))
+        return *this;
     if (this->sign > 0 && n.sign > 0)
         return BigInteger(andFunc(*this->magnitude, *n.magnitude), 1);
     if (this->sign < 0 && n.sign < 0)
@@ -225,6 +246,7 @@ BigInteger BigInteger::operator&(const BigInteger & n) const
         auto && v = sub(*this->magnitude, 1);
         return BigInteger(andnot(*n.magnitude, *v), 1);
     }
+    // n.sign < 0
     {
         auto && v = sub(*n.magnitude, 1);
         return BigInteger(andnot(*this->magnitude, *v), 1);
@@ -238,13 +260,19 @@ BigInteger BigInteger::operator|(const BigInteger & n) const
         return n;
     if (n.sign == 0)
         return *this;
+    if (equalNegOne(*this) || equalNegOne(n))
+        return -1;
     if (this->sign > 0 && n.sign > 0)
         return BigInteger(orFunc(*this->magnitude, *n.magnitude), 1);
     if (this->sign < 0 && n.sign < 0)
     {
         auto && v1 = sub(*this->magnitude, 1);
         auto && v2 = sub(*n.magnitude, 1);
-        return BigInteger(add(*andFunc(*v1, *v2), 1), -1);
+        // andFunc can result 0, but we eliminate this case
+        // when v1 == 0 || v2 == 0 || v1 == -1 || v2 == -1
+        auto && a = andFunc(*v1, *v2);
+        assert(a->size() != 0);
+        return BigInteger(add(*a, 1), -1);
     }
     if (this->sign < 0)
     {
@@ -253,8 +281,10 @@ BigInteger BigInteger::operator|(const BigInteger & n) const
         = ~(OP1 | ~(OP2 - 1)) + 1 =
         = (~OP1 & (OP2 - 1)) + 1      */
         auto && v = sub(*this->magnitude, 1);
+        // andnot won't be zero unless all are zero, won't happen
         return BigInteger(add(*andnot(*v, *n.magnitude), 1), -1);
     }
+    // n.sign < 0
     {
         auto && v = sub(*n.magnitude, 1);
         return BigInteger(add(*andnot(*v, *this->magnitude), 1), -1);
@@ -268,8 +298,19 @@ BigInteger BigInteger::operator^(const BigInteger & n) const
         return n;
     if (n.sign == 0)
         return *this;
+    if (equalNegOne(*this))
+        return ~n;
+    if (equalNegOne(n))
+        return ~(*this);
     if (this->sign > 0 && n.sign > 0)
-        return BigInteger(xorFunc(*this->magnitude, *n.magnitude), 1);
+    {
+        // when equal, result will be zero
+        // not worth compare
+        auto && x = xorFunc(*this->magnitude, *n.magnitude);
+        if (x->size() == 0)
+            return zero;
+        return BigInteger(*x, 1);
+    }
     if (this->sign < 0 && n.sign < 0)
     {
         /* Both operands are negative, the result will be positive.
@@ -278,7 +319,10 @@ BigInteger BigInteger::operator^(const BigInteger & n) const
             = (OP1 - 1) ^ (OP2 - 1)  */
         auto && v1 = sub(*this->magnitude, 1);
         auto && v2 = sub(*n.magnitude, 1);
-        return BigInteger(xorFunc(*v1, *v2), 1);
+        auto && x = xorFunc(*v1, *v2);
+        if (x->size() == 0)
+            return zero;
+        return BigInteger(*x, 1);
     }
     if (this->sign < 0)
     {
@@ -289,6 +333,7 @@ BigInteger BigInteger::operator^(const BigInteger & n) const
         auto && v = sub(*this->magnitude, 1);
         return BigInteger(add(*xorFunc(*v, *n.magnitude), 1), -1);
     }
+    // n.sign < 0
     {
         auto && v = sub(*n.magnitude, 1);
         return BigInteger(add(*xorFunc(*v, *this->magnitude), 1), -1);

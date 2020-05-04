@@ -71,6 +71,7 @@ namespace zyd2001
         static void addMul(Vec &, const ElemType, const ElemType);
         static ElemType divremMutable(Vec &, const ElemType);
         inline static void removeZero(Vec &);
+        inline static bool equalNegOne(const BigInteger &);
 
         BigInteger(const Vec, int sign);
         BigInteger(const VecPtr, int sign);

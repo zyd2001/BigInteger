@@ -12,6 +12,7 @@ TEST_F(ShiftTest, test0)
     eq;
     i = 0;
     i >> 123;
+    zeroTest(i);
     eq;
 }
 
@@ -25,7 +26,7 @@ TEST_F(ShiftTest, test1)
     eq;
     res = 0;
     i = i >> 5000;
-    ASSERT_EQ(mag(i)->size(), 0);
+    zeroTest(i);
     eq;
 }
 
@@ -48,6 +49,6 @@ TEST_F(ShiftTest, test2)
     eq;
     res = 0;
     i = i >> 6;
-    ASSERT_EQ(mag(i)->size(), 0);
+    zeroTest(i);
     eq;
 }
