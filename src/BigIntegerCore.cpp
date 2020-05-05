@@ -630,10 +630,10 @@ void BigInteger::addMul(Vec & v, const ElemType p, const ElemType n)
 
 int BigInteger::convert(Vec & v, const char * str, int base)
 {
-    ElemType value = 0;
+    // ElemType value = 0;
     int sign = 1;
-    int step = digitsPerElem[base];
-    ElemType max = maxPerElem[base];
+    // int step = digitsPerElem[base];
+    // ElemType max = maxPerElem[base];
     char ch;
 
     // get rid of leading 0 and blank
@@ -650,7 +650,7 @@ int BigInteger::convert(Vec & v, const char * str, int base)
     while (*str == '0')
         str++;
 
-    int i = 0;
+    // int i = 0;
     ch = *str;
     if (ch == 0 || std::isspace(ch))
         return 0;
