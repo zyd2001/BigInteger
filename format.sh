@@ -7,7 +7,8 @@ if [ `echo -e "$v\n10.0.0" | sort -V | head -n1` != '10.0.0' ]; then
     exit;
 fi
 
-files=`ls src/* include/* test/*`
+files=`ls src/* include/* test/* | grep ".cpp
+.hpp"`
 
 for f in $files; do
     `clang-format -style=file $f -i`

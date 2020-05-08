@@ -16,6 +16,10 @@ No increment decrement and assign operator yet.
 Very limited or none optimization for algorithms. All operation use basic algorithm.
 
 ### Build
-without test: `cmake . -DNO_TEST=on`
 
-with test: Must clone the submodule `googletest` first. Then `cmake .`
+without test: `cmake . -Bbuild && cmake --build build`
+
+with test: 
+1. Execute `git submodule update --init` 
+2. Then `cmake . -DBIGINTEGER_TEST=on -Bbuild && cmake --build build` 
+3. Then change to `build` and run `ctest`
