@@ -1,10 +1,12 @@
 #ifndef __BIGINTEGER_HPP__
 #define __BIGINTEGER_HPP__
 
-#include <climits>
+#include <array>
 #include <cstdint>
 #include <exception>
+#include <limits>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -30,12 +32,15 @@ namespace zyd2001
         VecPtr magnitude;
         int sign = 0;
 
-        const static int digitsPerElem[36];
-        const static ElemType maxPerElem[36];
-        const static SignedElemType signedElemMax = INT64_MAX;
-        const static SignedElemType signedElemMin = INT64_MIN;
-        const static ElemType elemMAX = UINT64_MAX;
-        const static ElemType elemWIDTH = sizeof(ElemType) * CHAR_BIT;
+        const static std::array<double, 37> log2;
+        constexpr static std::array<int, 37> calcDigits();
+        constexpr static std::array<ElemType, 37> calcMax();
+        const static std::array<int, 37> digitsPerElem;
+        const static std::array<ElemType, 37> maxPerElem;
+        const static SignedElemType signedElemMax = std::numeric_limits<SignedElemType>::max();
+        const static SignedElemType signedElemMin = std::numeric_limits<SignedElemType>::min();
+        const static ElemType elemMAX = std::numeric_limits<ElemType>::max();
+        const static ElemType elemWIDTH = std::numeric_limits<ElemType>::digits;
 
         const static BigInteger zero;
         const static VecPtr zeroPtr;
@@ -67,7 +72,7 @@ namespace zyd2001
         inline static int digit(char, int base);
         inline static char toChar(const ElemType, int base);
         inline static ElemType convert(const char *, int base, int length);
-        static int convert(Vec &, const char *, int base);
+        static int convert(Vec &, const char *, std::size_t len, int base);
         static void addMul(Vec &, const ElemType, const ElemType);
         static ElemType divremMutable(Vec &, const ElemType);
         inline static void removeZero(Vec &);
@@ -80,10 +85,9 @@ namespace zyd2001
         BigInteger() : magnitude(zeroPtr) {}
         BigInteger(const SignedElemType);
         BigInteger(const int);
-        BigInteger(const std::string &);
-        BigInteger(const std::string &, int base);
-        BigInteger(const char *);
-        BigInteger(const char *, int base);
+        explicit BigInteger(const std::string &);
+        explicit BigInteger(const std::string &, int base);
+        explicit BigInteger(const char *, std::size_t len, int base);
         BigInteger(const BigInteger &) = default;
         BigInteger operator+(const BigInteger &) const;
         BigInteger operator-(const BigInteger &) const;
@@ -126,6 +130,11 @@ namespace zyd2001
         BigIntegerException(const std::string & s) : msg(s) {}
         const char * what() const noexcept override { return msg.c_str(); }
     };
+
+    namespace BigIntegerLiteral
+    {
+        BigInteger operator"" _BI(const char * s, std::size_t i);
+    }
 } // namespace zyd2001
 
 #endif

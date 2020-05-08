@@ -1,6 +1,7 @@
 #include "BigIntegerTest.hpp"
 
 using namespace zyd2001;
+using namespace zyd2001::BigIntegerLiteral;
 using ConstructorTest = BigIntegerTest;
 TEST_F(ConstructorTest, defaultConstructor)
 {
@@ -33,17 +34,17 @@ TEST_F(ConstructorTest, constructFromN1)
 
 TEST_F(ConstructorTest, constructFromINT_MAX)
 {
-    BigInteger i(INT_MAX);
+    BigInteger i(std::numeric_limits<int>::max());
     ASSERT_EQ(mag(i)->size(), 1);
-    ASSERT_EQ(mag(i)->at(0), INT_MAX);
+    ASSERT_EQ(mag(i)->at(0), std::numeric_limits<int>::max());
     ASSERT_EQ(sign(i), 1);
 }
 
 TEST_F(ConstructorTest, constructFromINT_MIN)
 {
-    BigInteger i(INT_MIN);
+    BigInteger i(std::numeric_limits<int>::min());
     ASSERT_EQ(mag(i)->size(), 1);
-    ASSERT_EQ(mag(i)->at(0), static_cast<BigInteger::SignedElemType>(INT_MAX) + 1);
+    ASSERT_EQ(mag(i)->at(0), static_cast<BigInteger::SignedElemType>(std::numeric_limits<int>::max()) + 1);
     ASSERT_EQ(sign(i), -1);
 }
 
@@ -330,4 +331,12 @@ TEST_F(ConstructorTest, copyConstructorTest0)
     j = c;
     ASSERT_EQ(mag(c), mag(j));
     ASSERT_EQ(sign(c), sign(j));
+}
+
+TEST_F(ConstructorTest, stringLiteralTest)
+{
+    BigInteger i = "018275349876918276983479"_BI;
+    BigInteger j("018275349876918276983479");
+    ASSERT_EQ(*mag(i), *mag(j));
+    ASSERT_EQ(sign(i), sign(j));
 }

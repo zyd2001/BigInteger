@@ -394,9 +394,7 @@ std::tuple<BigInteger::VecPtr, BigInteger::VecPtr> BigInteger::divrem(const Vec 
 {
     if (b.size() == 1)
     {
-        ElemType r;
-        VecPtr quo;
-        std::tie(quo, r) = divrem(a, b.back());
+        auto [quo, r] = divrem(a, b.back());
         if (r == 0)
             return {quo, zeroPtr};
         return {quo, std::make_shared<Vec>(Vec{r})};
@@ -544,18 +542,40 @@ BigInteger::VecPtr BigInteger::sr(const Vec & v, const ElemType n)
     return res;
 }
 
-// TODO: Type
-const int BigInteger::digitsPerElem[36] = {0, 0, 63, 40, 31, 27, 24, 22, 21, 20, 19, 18, 17, 17, 16, 16, 15, 15,
-    15, 15, 14, 14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12};
-const BigInteger::ElemType BigInteger::maxPerElem[36] = {1, 1, 9223372036854775808UL, 12157665459056928801UL,
-    4611686018427387904UL, 7450580596923828125UL, 4738381338321616896UL, 3909821048582988049UL,
-    9223372036854775808UL, 12157665459056928801UL, 10000000000000000000UL, 5559917313492231481UL,
-    2218611106740436992UL, 8650415919381337933UL, 2177953337809371136UL, 6568408355712890625UL,
-    1152921504606846976UL, 2862423051509815793UL, 6746640616477458432UL, 15181127029874798299UL,
-    1638400000000000000UL, 3243919932521508681UL, 6221821273427820544UL, 11592836324538749809UL,
-    876488338465357824UL, 1490116119384765625UL, 2481152873203736576UL, 4052555153018976267UL,
-    6502111422497947648UL, 10260628712958602189UL, 15943230000000000000UL, 787662783788549761UL,
-    1152921504606846976UL, 1667889514952984961UL, 2386420683693101056UL};
+const std::array<double, 37> BigInteger::log2 = {0, 0, 1.0, 0.6309297535714574, 0.5, 0.43067655807339306,
+    0.3868528072345416, 0.3562071871080222, 0.33333333333333337, 0.3154648767857287, 0.30102999566398114,
+    0.2890648263178878, 0.2789429456511298, 0.27023815442731974, 0.26264953503719357, 0.2559580248098155, 0.25,
+    0.244650542118226, 0.23981246656813146, 0.23540891336663824, 0.23137821315975918, 0.227670248696953,
+    0.2242438242175754, 0.22106472945750374, 0.21810429198553155, 0.21533827903669653, 0.21274605355336315,
+    0.21030991785715247, 0.20801459767650946, 0.20584683246043445, 0.20379504709050617, 0.20184908658209985,
+    0.19999999999999998, 0.19823986317056053, 0.19656163223282258, 0.1949590218937863, 0.1934264036172708};
+constexpr std::array<int, 37> BigInteger::calcDigits()
+{
+    std::array<int, 37> a{};
+    // one binray digits can represenst log(i) of base i
+    for (size_t i = 2; i < a.size(); i++)
+        a[i] = std::numeric_limits<ElemType>::digits * log2[i];
+    return a;
+}
+constexpr std::array<BigInteger::ElemType, 37> BigInteger::calcMax()
+{
+    std::array<ElemType, 37> a{};
+    for (size_t i = 2; i < a.size(); i++)
+    {
+        ElemType v = 1;
+        // calculate power
+        for (int j = 0; j < digitsPerElem[i]; j++)
+            v *= i;
+        if (v != 0)
+            a[i] = v;
+        else
+            a[i] = std::numeric_limits<ElemType>::max();
+    }
+    return a;
+}
+// order is important here
+const std::array<int, 37> BigInteger::digitsPerElem = calcDigits();
+const std::array<BigInteger::ElemType, 37> BigInteger::maxPerElem = calcMax();
 
 /**
  * @brief helper Function to convert char to int
@@ -592,7 +612,7 @@ BigInteger::ElemType BigInteger::convert(const char * str, int base, int length)
     for (int i = 0; i < length; i++)
     {
         num *= base;
-        num += digit(str[i], base);
+        num += digit(std::tolower(str[i]), base);
     }
     return num;
 }
@@ -601,11 +621,7 @@ void BigInteger::addMul(Vec & v, const ElemType p, const ElemType n)
 {
     LargeType temp;
     ElemType carry = 0;
-    if (v.size() == 0)
-    {
-        v.emplace_back(n);
-        return;
-    }
+    assert(v.size() > 0);
     for (std::size_t i = 0; i < v.size(); i++)
     {
         temp = static_cast<LargeType>(p) * v[i] + carry;
@@ -628,14 +644,15 @@ void BigInteger::addMul(Vec & v, const ElemType p, const ElemType n)
         v.emplace_back(carry);
 }
 
-int BigInteger::convert(Vec & v, const char * str, int base)
+int BigInteger::convert(Vec & v, const char * s, std::size_t len, int base)
 {
     // ElemType value = 0;
     int sign = 1;
-    // int step = digitsPerElem[base];
-    // ElemType max = maxPerElem[base];
+    int step = digitsPerElem[base];
+    ElemType max = maxPerElem[base];
     char ch;
 
+    const char * str = s;
     // get rid of leading 0 and blank
     while (std::isspace(*str))
         str++;
@@ -650,27 +667,41 @@ int BigInteger::convert(Vec & v, const char * str, int base)
     while (*str == '0')
         str++;
 
-    // int i = 0;
     ch = *str;
     if (ch == 0 || std::isspace(ch))
         return 0;
-    do // TODO: optimization
+
+    const char * start = str;
+    // find first space
+    while (ch != 0 && !std::isspace(ch))
     {
-        // i++;
         str++;
-        addMul(v, base, digit(std::tolower(ch), base));
-        // value *= base;
-        // value += digit(ch, base);
-        // if (i == step)
-        // {
-        //     addMul(v, max, value);
-        //     value = 0;
-        //     i = 0;
-        // }
         ch = *str;
-    } while (ch != 0 && !std::isspace(ch));
-    // if (value != 0)
-    //     addMul(v, max, value);
+    }
+    std::size_t realLength = len - (start - s);
+    if (ch != 0)
+        realLength -= (str - start);
+
+    auto slice = realLength / step;
+    auto rem = realLength % step;
+    v.reserve(slice + rem ? 1 : 0);
+    if (rem > 0)
+    {
+        v.emplace_back(convert(start, base, rem));
+        start += rem;
+    }
+    else
+    {
+        v.emplace_back(convert(start, base, step));
+        slice -= 1;
+        start += step;
+    }
+
+    for (std::size_t i = 0; i < slice; i++)
+    {
+        addMul(v, max, convert(start, base, step));
+        start += step;
+    }
     return sign;
 }
 

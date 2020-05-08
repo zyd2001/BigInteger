@@ -3,7 +3,8 @@
 #include <cassert>
 #include <cctype>
 #include <cstring>
-#include <iostream>
+#include <istream>
+#include <ostream>
 #include <sstream>
 
 using namespace zyd2001;
@@ -24,21 +25,24 @@ bool BigInteger::equalNegOne(const BigInteger & n)
  *
  * @param i
  */
-BigInteger::BigInteger(const SignedElemType i) : magnitude(zeroPtr)
+BigInteger::BigInteger(const SignedElemType i)
 {
     if (i == 0)
-        sign = 0;
+    {
+        this->sign = 0;
+        this->magnitude = zeroPtr;
+    }
     else
     {
         ElemType n = i;
         this->magnitude = std::make_shared<Vec>(1);
         if (i < 0)
         {
-            sign = -1;
+            this->sign = -1;
             n = -i;
         }
         else
-            sign = 1;
+            this->sign = 1;
         (*magnitude)[0] = n;
     }
 }
@@ -58,27 +62,25 @@ BigInteger::BigInteger(const std::string & str) : BigInteger(str, 10) {}
  * @param str
  * @param base 2 < base <= 36
  */
-BigInteger::BigInteger(const std::string & str, int base) : BigInteger(str.c_str(), base) {}
+BigInteger::BigInteger(const std::string & str, int base) : BigInteger(str.c_str(), str.length(), base) {}
 
-/**
- * @brief Construct a new BigInteger object from a base 10 char string
- *
- * @param str
- */
-BigInteger::BigInteger(const char * str) : BigInteger(str, 10) {}
-
-BigInteger::BigInteger(const char * str, int base) : magnitude(zeroPtr)
+BigInteger::BigInteger(const char * str, std::size_t len, int base)
 {
     if (base < 2 || base > 36)
         throw BigIntegerException("Invalid base");
     if (std::strlen(str) == 0)
-        sign = 0;
+    {
+        this->sign = 0;
+        this->magnitude = zeroPtr;
+    }
     else
     {
         this->magnitude = std::make_shared<Vec>();
-        sign = convert(*this->magnitude, str, base);
+        this->sign = convert(*this->magnitude, str, len, base);
     }
 }
+
+BigInteger BigIntegerLiteral::operator"" _BI(const char * s, std::size_t i) { return BigInteger(s, i, 10); }
 
 BigInteger::BigInteger(const Vec & e, int sign) : magnitude(std::make_shared<Vec>(e)), sign(sign) {}
 // TODO: handle zero in constructor
@@ -159,7 +161,7 @@ BigInteger BigInteger::operator%(const BigInteger & n) const
         return zero;
     // remainder's sign always follow dividend
     // handle remainder zero
-    auto rem = std::get<1>(divrem(*this->magnitude, *n.magnitude));
+    auto [quo, rem] = divrem(*this->magnitude, *n.magnitude);
     if (rem->size() == 0)
         return zero;
     return BigInteger(rem, this->sign);
@@ -179,8 +181,7 @@ BigInteger::QuoRemType BigInteger::div(const BigInteger & n) const
 
     // handle different sign
     int quoSign = (this->sign == n.sign) ? 1 : -1;
-    VecPtr quo, rem;
-    std::tie(quo, rem) = divrem(*this->magnitude, *n.magnitude);
+    auto [quo, rem] = divrem(*this->magnitude, *n.magnitude);
     if (rem->size() == 0)
         return {BigInteger(quo, quoSign), zero};
     return {BigInteger(quo, quoSign), BigInteger(rem, this->sign)};
