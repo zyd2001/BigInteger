@@ -29,6 +29,11 @@ TEST_F(AddSubTest, NegateTest0)
     res = 0;
     zeroTest(-a);
     e;
+    a.negate();
+    zeroTest(a);
+    a = 1;
+    a.negate();
+    ASSERT_EQ(a, -1);
 }
 
 TEST_F(AddSubTest, AddSubTest0)
@@ -119,8 +124,8 @@ TEST_F(AddSubTest, AddSubTest3)
     BigInteger a, b;
     a = "340282366920938463463374607431768211456"_BI; // 1,0,0
     b = "-1"_BI;
-    ASSERT_EQ(mag(a + b)->size(), 2);
+    ASSERT_EQ(mag(a + b).size, 2);
     a = "349867967249857934752374237402375736730572405730572905782342342342342342093570275239047"_BI;
     b = "349867967249857934752374237402375736730572405730572905782342342342342342093570275239046"_BI;
-    ASSERT_EQ(mag(a - b)->size(), 1);
+    ASSERT_EQ(mag(a - b).size, 1);
 }

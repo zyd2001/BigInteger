@@ -43,7 +43,7 @@ TEST_F(ShiftTest, test2)
     eq;
     res = -123;
     i = i >> 1251;
-    ASSERT_EQ(mag(i)->size(), 1);
+    ASSERT_EQ(mag(i).size, 1);
     eq;
     res = -61;
     i = i >> 1;

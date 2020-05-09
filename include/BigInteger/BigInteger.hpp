@@ -2,6 +2,7 @@
 #define __BIGINTEGER_HPP__
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <exception>
 #include <limits>
@@ -25,70 +26,100 @@ namespace zyd2001
         using QuoRemType = std::tuple<BigInteger, BigInteger>;
 
     private:
-        using LargeType = __uint128_t;
-        using Vec = std::vector<ElemType>;
-        using VecPtr = std::shared_ptr<Vec>;
-        using TwoElemType = std::tuple<ElemType, ElemType>;
-        VecPtr magnitude;
-        int sign = 0;
-
-        const static std::array<double, 37> log2;
-        constexpr static std::array<int, 37> calcDigits();
-        constexpr static std::array<ElemType, 37> calcMax();
-        const static std::array<int, 37> digitsPerElem;
-        const static std::array<ElemType, 37> maxPerElem;
         const static SignedElemType signedElemMax = std::numeric_limits<SignedElemType>::max();
         const static SignedElemType signedElemMin = std::numeric_limits<SignedElemType>::min();
         const static ElemType elemMAX = std::numeric_limits<ElemType>::max();
         const static ElemType elemWIDTH = std::numeric_limits<ElemType>::digits;
 
-        const static BigInteger zero;
-        const static VecPtr zeroPtr;
+        struct Magnitude
+        {
+            using LargeType = __uint128_t;
+            using TwoElemType = std::tuple<ElemType, ElemType>;
+            Magnitude() = default;
+            Magnitude(std::size_t);
+            Magnitude(const Magnitude & b) : vec(b.copy()), size(b.size) {}
+            Magnitude(Magnitude && mag) : vec(std::move(mag.vec)), size(mag.size) {}
+            Magnitude & operator=(const Magnitude & v)
+            {
+                this->vec = v.copy();
+                this->size = v.size;
+                return *this;
+            }
+            Magnitude & operator=(Magnitude && v)
+            {
+                this->vec = std::move(v.vec);
+                this->size = v.size;
+                return *this;
+            }
+            ~Magnitude() = default;
+            std::unique_ptr<ElemType[]> vec;
+            std::size_t size = 0;
 
-        static VecPtr add(const Vec &, const ElemType);
-        static VecPtr add(const Vec &, const Vec &);
-        static VecPtr sub(const Vec &, const ElemType);
-        static VecPtr sub(const Vec &, const Vec &);
-        static VecPtr mul(const Vec &, const Vec &);
-        static VecPtr longMul(const Vec &, const ElemType);
-        static VecPtr longMul(const Vec &, const Vec &);
-        static VecPtr div(const Vec &, const ElemType);
-        static std::tuple<VecPtr, ElemType> divrem(const Vec &, const ElemType);
-        static VecPtr div(const Vec &, const Vec &);
-        static std::tuple<VecPtr, VecPtr> divrem(const Vec &, const Vec &);
-        static void divFull(const Vec & u, const Vec & v, Vec & q, Vec & r, bool rem);
-        static int subMul(Vec & u, const Vec & v, const ElemType q, const std::size_t index);
-        static void subMutable(Vec & u, const Vec & s, const std::size_t index);
-        static int normalize(Vec &);
-        static VecPtr andFunc(const Vec &, const Vec &);
-        static VecPtr andnot(const Vec &, const Vec &);
-        static VecPtr orFunc(const Vec &, const Vec &);
-        static VecPtr xorFunc(const Vec &, const Vec &);
-        static VecPtr sl(const Vec &, const ElemType);
-        static VecPtr sr(const Vec &, const ElemType);
-        inline static TwoElemType divrem(const ElemType h, const ElemType l, const ElemType divisor);
-        inline static TwoElemType mullh(const ElemType, const ElemType);
-        static int compare(const Vec &, const Vec &);
-        inline static int digit(char, int base);
-        inline static char toChar(const ElemType, int base);
-        inline static ElemType convert(const char *, int base, int length);
-        static int convert(Vec &, const char *, std::size_t len, int base);
-        static void addMul(Vec &, const ElemType, const ElemType);
-        static ElemType divremMutable(Vec &, const ElemType);
-        inline static void removeZero(Vec &);
+            // mimic vector's action, easier to change
+            inline ElemType & operator[](std::size_t i) { return vec[i]; }
+            inline const ElemType & operator[](std::size_t i) const { return vec[i]; }
+            inline void resize(std::size_t newSize) { this->size = newSize; }
+            inline ElemType & back() { return vec[size - 1]; }
+            inline const ElemType & back() const { return vec[size - 1]; }
+            inline ElemType & at(std::size_t i) { return vec[i]; }
+            inline const ElemType & at(std::size_t i) const { return vec[i]; }
+            inline ElemType * begin() { return vec.get(); }
+            inline const ElemType * begin() const { return vec.get(); }
+
+            const static std::array<double, 37> log2;
+            constexpr static std::array<int, 37> calcDigits();
+            constexpr static std::array<ElemType, 37> calcMax();
+            const static std::array<int, 37> digitsPerElem;
+            const static std::array<ElemType, 37> maxPerElem;
+
+            Magnitude operator+(const ElemType) const;
+            Magnitude operator+(const Magnitude &) const;
+            Magnitude operator-(const ElemType) const;
+            Magnitude operator-(const Magnitude &) const;
+            Magnitude operator*(const Magnitude &) const;
+            Magnitude longMul(const ElemType) const;
+            Magnitude longMul(const Magnitude &) const;
+            Magnitude operator/(const ElemType) const;
+            std::tuple<Magnitude, ElemType> divrem(const ElemType) const;
+            Magnitude operator/(const Magnitude &) const;
+            std::tuple<Magnitude, Magnitude> divrem(const Magnitude &) const;
+            void divFull(const Magnitude & v, Magnitude & q, Magnitude & r, bool rem) const;
+            int subMul(const Magnitude & v, const ElemType q, const std::size_t index);
+            void subMutable(const Magnitude & s, const std::size_t index);
+            int normalize();
+            Magnitude operator&(const Magnitude &) const;
+            Magnitude andnot(const Magnitude &) const;
+            Magnitude operator|(const Magnitude &) const;
+            Magnitude operator^(const Magnitude &) const;
+            Magnitude operator<<(const ElemType) const;
+            Magnitude operator>>(const ElemType) const;
+            void addMul(const ElemType, const ElemType);
+            ElemType divremMutable(const ElemType);
+            std::unique_ptr<ElemType[]> copy() const;
+            std::string toRawString(int base, bool upper) const;
+
+            static std::tuple<Magnitude, int> convert(const char *, std::size_t len, int base);
+            inline static TwoElemType divrem(const ElemType h, const ElemType l, const ElemType divisor);
+            inline static TwoElemType mullh(const ElemType, const ElemType);
+            int compare(const Magnitude &) const;
+            inline void removeZero();
+            inline static int digit(char, int base);
+            inline static char toChar(const ElemType, int base);
+            inline static ElemType convert(const char *, int base, int length);
+        };
+        Magnitude magnitude;
+        int sign = 0;
+
         inline static bool equalNegOne(const BigInteger &);
-
-        BigInteger(const Vec &, int sign);
-        BigInteger(const VecPtr &, int sign);
+        BigInteger(Magnitude &&, int sign);
 
     public:
-        BigInteger() : magnitude(zeroPtr) {}
+        BigInteger() = default;
         BigInteger(const SignedElemType);
         BigInteger(const int);
         explicit BigInteger(const std::string &);
         explicit BigInteger(const std::string &, int base);
         explicit BigInteger(const char *, std::size_t len, int base);
-        BigInteger(const BigInteger &) = default;
         BigInteger operator+(const BigInteger &) const;
         BigInteger operator-(const BigInteger &) const;
         BigInteger operator*(const BigInteger &) const;
@@ -103,6 +134,7 @@ namespace zyd2001
         BigInteger operator&(const BigInteger &) const;
         BigInteger operator|(const BigInteger &) const;
         BigInteger operator^(const BigInteger &) const;
+        void negate();
         bool operator>(const BigInteger &) const;
         bool operator>=(const BigInteger &) const;
         bool operator<(const BigInteger &) const;
